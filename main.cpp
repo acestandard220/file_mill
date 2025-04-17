@@ -1,15 +1,10 @@
 #include <iostream>
 #include <ostream>
-#include "bmpread.h"
+//#include "bmpread.h"
+#include "pdfread.h"
 
 int main()
 {
-  Initialize();
-
-  LogDebugInfo();
-
-  Shutdown();
-  
-  
+  PDFREAD::Initialize();
   return 0;
 }
