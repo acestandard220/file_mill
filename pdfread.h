@@ -22,10 +22,9 @@ namespace PDFREAD
 
   struct page_collection
   {
+    uint32_t id;
     uint32_t* mPages;
     uint32_t nPages = 0;
-
-    void GetPage(uint32_t index);//Go to chunks for the content
   };
   
   struct page 
@@ -33,10 +32,6 @@ namespace PDFREAD
     
   };
 
-  struct chunks
-  {
-    page* pages;
-  };
   struct root_node
   {
     uint32_t id;
