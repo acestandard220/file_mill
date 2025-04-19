@@ -8,7 +8,7 @@ int m =9;
 
 namespace PDFREAD{
 
-  std::array<const std::string, 10> type_string{ "/Catalog","/Pages","Page" };
+  std::array<const std::string, 10> type_string{ "/Catalog","/Pages","Page","endobj"};
   std::unordered_map<char, char> pair = { {'[',']'},{'{','}'},{'(',')'}};
   filedata* data;
 
@@ -28,7 +28,7 @@ namespace PDFREAD{
     return x;
   }
 
-  std::vector<int> get_array_objs(std::string& line, int start)
+  std::vector<int> get_array_objs(std::string& line, int start) //todo: merge with beta idea
   {
       std::vector<int> r;
       char h = line[start];
@@ -51,6 +51,37 @@ namespace PDFREAD{
       int nObjs = static_cast<int>(tD) - tDD;
 
       for (int i = 0; i < nObjs * 6; i+=6)
+      {
+          int index = i + objs_start;
+          int int_length = get_length_to(line, index);
+          r.push_back(std::stoi(line.substr(index, int_length)));
+      }
+      return r;
+  }
+
+  std::vector<int> get_array_objs2(std::string& line, int start,int obj_blocks,int spacing = 1) //todo:beta
+  {
+      std::vector<int> r;
+      char h = line[start];
+      int objs_start = start + 1;//Plus 1 to skip the opening braces
+
+      if (pair.find(h) == pair.end())
+      {
+          std::cout << "[ERROR]:[SYNTHAX]:::Invalid PDF Container Synthax...\n";
+          return std::vector<int>();
+      }
+
+
+      int a = get_length_to(line, start, pair[h]);  //Get length to its closing brackets...
+      std::string linear_data = line.substr(objs_start, a); //Store length to its closing brackets
+      int T = linear_data.length() - 1; //Remove \n
+
+      //Formula for finding number of objects in array
+      int tD = T / obj_blocks;
+      int tDD = static_cast<int>(tD / obj_blocks);
+      int nObjs = static_cast<int>(tD) - tDD;
+
+      for (int i = 0; i < nObjs * obj_blocks + spacing; i += obj_blocks)
       {
           int index = i + objs_start;
           int int_length = get_length_to(line, index);
@@ -89,88 +120,131 @@ namespace PDFREAD{
       return true;
   }
 
-  void read_page_collector(std::ifstream& file)
+  bool end_of_obj(std::string& line)
   {
-    file.seekg(data->obj_offsets[data->root->pages->id][0]);
-    std::string line;
+      return (line.find(type_string[ENDOBJ]) != std::string::npos);
+  }
 
-    bool type_pages_flag = false;
-    while(std::getline(file,line))
+ //TODO: find a way to not read to the end of the file to avoid using flags to tell what has been done and what hasn't been done
+  //If  you find the way, you won't have to worry about reading keys from other objects
+  //TODO: Done but has to be tested...
+    void read_page_data(std::ifstream& file)
     {
-      std::string search = "/Type ";
-      int start = has_key(line, search);
-
-      if(start && !type_pages_flag)
-      {
-        if (!validate_obj_type(line, PAGES))
+        std::string line;
+        for (auto& page_obj_index : data->root->pages->mPages)
         {
-            return;
+            file.clear();
+            file.seekg(data->obj_offsets[page_obj_index][0],std::ios::beg);
+            
+            
+            while (std::getline(file,line))
+            {
+                if (end_of_obj(line)) { break; }
+                int start = has_key(line,"/Type ");
+                if (start)
+                {
+                    if (!validate_obj_type(line, PAGE))
+                    {
+                        return;
+                    }
+                }
+                
+                start = has_key(line, "/MediaBox ");
+                if (start)
+                {
+                    //get_array_objs2(line,start,)
+                }
+                
+            
+            }
         }
-        else{
-            type_pages_flag = true;
-        }
-      }
-
-      search = "/Count ";  
-      start = has_key(line, search);
-
-      if(start)
-      {
-        int x = get_length_to(line, start);
-        data->root->pages->nPages = std::stoi(line.substr(start, x));
-        std::cout << "Page Count::: " << data->root->pages->nPages << std::endl;
-      }
-      search = "/Kids ";
-      start = has_key(line, search);
-      if (start)
-      {
-          data->root->pages->mPages = get_array_objs(line, start);
-          if (data->root->pages->mPages.size() == data->root->pages->nPages)
-          {
-              //Todo: Page number info does not match...
-              //Todo: This is a ::PDFFix feature to be implemented later...
-              std::cout << "Page number indicated and pages found do not match\n";
-          }
-          continue;
-      }
-      std::string subbed = line.substr(start);
-   }
-  }
-  // add breaks when we are certain we dont need anything else;
-  void read_root_obj(std::ifstream& file)
-  { 
-    file.seekg(data->obj_offsets[data->root->id][0]);
-    std::string line;
-    
-    bool type_catalog_flag = false;
-    while(std::getline(file,line))
-    {
-      std::string search = "/Type ";
-      int start = has_key(line, search);
-
-      if (start && !type_catalog_flag)
-      {
-          
-          if (!validate_obj_type(line,CATALOG))
-          {
-              return;
-          }
-          else { type_catalog_flag = true; }
-      }
-      
-
-      data->root->pages = new page_collection;
-      search = "/Pages ";
-      start = has_key(line, search);
-
-      if(start)
-      {  
-        data->root->pages->id = std::stoi(line.substr(start,get_length_to(line,start)));
-        std::cout << "Page Collector ID::: "<< data->root->pages->id <<std::endl;
-        break;
-      }
     }
-  }
+
+    void read_page_collector(std::ifstream& file)
+    {  
+        file.seekg(data->obj_offsets[data->root->pages->id][0]);
+        std::string line;
+    
+        while(std::getline(file,line))
+        {
+          if (end_of_obj(line)) { break; }
+          std::string search = "/Type ";
+          int start = has_key(line, search);
+    
+            if(start)
+            {
+                if (!validate_obj_type(line, PAGES))
+                {
+                    return;
+                }
+            }    
+            search = "/Count ";  
+            start = has_key(line, search);
+            if(start)
+            {
+                int x = get_length_to(line, start);
+                data->root->pages->nPages = std::stoi(line.substr(start, x));
+                std::cout << "Page Count::: " << data->root->pages->nPages << std::endl;
+            }
+            search = "/Kids ";
+            start = has_key(line, search);
+            if (start)
+            {
+                data->root->pages->mPages = get_array_objs(line, start);
+                data->cPage.resize(data->root->pages->nPages);
+                data->cMediaBox.resize(data->root->pages->nPages);
+                if (data->root->pages->mPages.size() == data->root->pages->nPages)
+                {
+                    //Todo: Page number info does not match...
+                    //Todo: This is a ::PDFFix feature to be implemented later...
+                    std::cout << "Page number indicated and pages found do not match\n";
+                }
+                continue;
+            }
+            std::string subbed = line.substr(start);
+        }
+    }  
+
+    // add breaks when we are certain we dont need anything else;
+    void read_root_obj(std::ifstream& file)
+    { 
+        file.clear();
+      file.seekg(data->obj_offsets[data->root->id][0]);
+      std::string line;
+      
+        while(std::getline(file,line))
+        {
+              if (line.find(type_string[ENDOBJ]) != std::string::npos)
+              {
+                  std::cout << "End of object reached\n";
+                  break;
+              }
+           
+            std::string search = "/Type ";
+            int start = has_key(line, search);
+           
+            if (start)
+            {
+                if (!validate_obj_type(line,CATALOG))
+                {
+                    return;
+                }
+                
+            }
+            
+           
+            data->root->pages = new page_collection;
+            search = "/Pages ";
+            start = has_key(line, search);
+           
+            if(start)
+            {  
+              data->root->pages->id = std::stoi(line.substr(start,get_length_to(line,start)));
+              std::cout << "Page Collector ID::: "<< data->root->pages->id <<std::endl;
+              break;
+            }
+        }
+    }
   //todo: Integrate With read_trailer_info
   void read_start_xref(std::ifstream* file)
   {
