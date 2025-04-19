@@ -8,6 +8,18 @@
 
 namespace PDFREAD
 {
+  enum type_index
+  {
+    CATALOG,
+    PAGES,
+    PAGE,
+    FONT
+
+    //NOTE: Don't forget to update  array size after additions...
+  };
+
+  extern std::array<const std::string, 10> type_string;
+
   struct root_node;
   struct filedata
   {

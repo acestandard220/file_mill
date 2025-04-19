@@ -8,6 +8,7 @@ int m =9;
 
 namespace PDFREAD{
 
+  extern std::array<const std::string, 10> type_string{ "/Catalog","/Pages","Page" };
   filedata* data;
 
   int get_length_to(std::string& line, int start , char stop = ' ')
@@ -21,106 +22,115 @@ namespace PDFREAD{
       }
       else {
         break;  
-      
       }
     }
     return x;
   }
 
-  //TODO:
-  //Seperate finding string keys into fnuctions 
-  //Create uint32_ start variable
-  //Tests
-/*  bool validate_obj_type()
-  {
-     int x = get_length_to(line, line_index + search_length);
-     if(line.substr(line_index + search_length, x) != "/Pages")
-     {
+  
 
-     }
+  int has_key(std::string& line, const std::string& key)
+  {
+      int line_index = line.find(key);
+      int search_length = key.length();
+      if (line.find(key) != std::string::npos)
+      {
+          return line_index + search_length; //true
+      }
+      else
+      {
+          return 0; //false
+      }
   }
-  */
+
+  bool validate_obj_type(std::string& line,type_index type)
+  {
+      const std::string temp = "/Type ";
+      int start = has_key(line, temp);
+
+      int x = get_length_to(line, start);
+      std::string sub = line.substr(start, x);
+      if (sub.find(type_string[type]) == std::string::npos)
+      {
+          std::cout << "[ERROR]:[XREF CORRUPT]:: Invalid "<< type_string[type] <<" Offset...\n";
+          return false;
+      }
+
+      return true;
+  }
 
   void read_page_collector(std::ifstream& file)
   {
     file.seekg(data->obj_offsets[data->root->pages->id][0]);
     std::string line;
+
+    bool type_pages_flag = false;
     while(std::getline(file,line))
     {
       std::string search = "/Type ";
-      int search_length = search.length();
-      int line_index = line.find(search);
-      int line_length = line.length(); 
+      int start = has_key(line, search);
 
-      if(line_index != std::string::npos)
+      if(start && !type_pages_flag)
       {
-        int x = get_length_to(line, line_index + search_length);
-        if(line.substr(line_index + search_length, x) != "/Pages")
+        if (!validate_obj_type(line, PAGES))
         {
-          std::cout<<"[ERROR]:[XREF CORRUPT]:: Invalid Page Collector Offset...\n";
-          return;
+            return;
+        }
+        else{
+            type_pages_flag = true;
         }
       }
 
-      search = "/Count ";
-      search_length = search.length();
-      line_index = line.find(search);
-      line_length = line.length();
+      search = "/Count ";  
+      start = has_key(line, search);
 
-      if(line_index != std::string::npos)
+      if(start)
       {
-        int x = get_length_to(line, line_index + search_length);
-        data->root->pages->nPages = std::stoi(line.substr(line_index + search_length,x));
+        int x = get_length_to(line, start);
+        data->root->pages->nPages = std::stoi(line.substr(start, x));
         data->root->pages->mPages = new uint32_t[data->root->pages->nPages];
+        std::cout << "Page Count::: " << data->root->pages->nPages << std::endl;
       }
       search = "/Kids ";
-      search_length = search.length();
-      line_index = line.find(search);
-      line_length = line.length();
+      start = has_key(line, search);
+      std::string subbed = line.substr(start);
+      std::cout << "Kids Raw::: " << subbed << std::endl;
 
       //Read kids
    }
   }
   // add breaks when we are certain we dont need anything else;
   void read_root_obj(std::ifstream& file)
-  {
-    
+  { 
     file.seekg(data->obj_offsets[data->root->id][0]);
     std::string line;
+    
+    bool type_catalog_flag = false;
     while(std::getline(file,line))
     {
       std::string search = "/Type ";
-      int search_length = search.length();
-      int line_index = line.find(search);
-      int line_length = line.length();
+      int start = has_key(line, search);
 
-      if(line_index != std::string::npos)
+      if (start && !type_catalog_flag)
       {
-        int x = 0;
-        for(int i = 0;i < line_length - line_index - search_length; i++)
-        {
-          if(line[i + line_index +search_length] != ' ')
+          
+          if (!validate_obj_type(line,CATALOG))
           {
-            x++;
+              return;
           }
-        }
-        if(line.substr(line_index + search_length,x) != "/Catalog")
-        {
-          std::cout<<"Corrupt XREF table, please repair pdf...\n";
-          return ;
-        }
+          else { type_catalog_flag = true; }
       }
+      
 
       data->root->pages = new page_collection;
       search = "/Pages ";
-      search_length = search.length();
-      line_index = line.find(search);
-      line_length = line.length();
+      start = has_key(line, search);
 
-      if(line_index != std::string::npos)
+      if(start)
       {  
-        data->root->pages->id = std::stoi(line.substr(line_index + search_length,get_length_to(line,line_index + search_length, ' ')));
-        continue;
+        data->root->pages->id = std::stoi(line.substr(start,get_length_to(line,start)));
+        std::cout << "Page Collector ID::: "<< data->root->pages->id <<std::endl;
+        break;
       }
     }
   }
@@ -144,7 +154,6 @@ namespace PDFREAD{
       {
         int value = std::stoi(line);
         data->xref_start = value;
-        std::cout<<"XREF::: "<<value<<std::endl;
         break;
       }
     }
@@ -156,49 +165,30 @@ namespace PDFREAD{
     std::string line; 
     while(std::getline(*file,line))
     { 
-      std::string search = "/Size ";  
-      int search_length = search.length();
-      int line_index = line.find(search);
-      int line_length = line.length();
+      std::string search = "/Size ";       
+      int start = has_key(line,search);
       
-      if(line_index != std::string::npos)
+      if(start)
       {  
          if(file->tellg() < data->xref_start)
          {
              continue; //skip any /Size attribute before the xref...
          }
-         int integer_length = 0;
-         for(int i = 0; i < line_length - line_index - search_length; i++)
-         {
-           if(line[i + line_index + search_length] != ' ')
-           {
-             integer_length++;
-           }
-         }
-         data->num_obj = std::stoi(line.substr(line_index + search_length,integer_length));
+         int integer_length = get_length_to(line, start);
+         data->num_obj = std::stoi(line.substr(start,integer_length));
          data->obj_offsets.resize(data->num_obj);
-         //std::cout<<"Num_Obj::: "<<data->num_obj<<std::endl;
+         std::cout<<"Num_Obj::: "<<data->num_obj<<std::endl;
          continue;
       }
       
       search = "/Root ";
-      line_length = line.length();
-      line_index = line.find(search);
+      start = has_key(line, search);
 
-      search_length = search.length();
-
-      if(line_index != std::string::npos)
+      if(start)
       {
-        int integer_length = 0;
-        for(int i = 0; i < line_length - line_index - search_length; i++)
-        {
-          if(line[i + line_index + search_length] != ' ')
-          {
-            integer_length++;
-          }
-        }
-        data->root->id = std::stoi(line.substr(line_index + search_length, integer_length));
-        //std::cout<<"ss:: "<<data->root->id<<std::endl;
+        int integer_length = get_length_to(line, start);
+        data->root->id = std::stoi(line.substr(start, integer_length));
+        std::cout<<"ss:: "<<data->root->id<<std::endl;
         break;
       }
     }
@@ -244,6 +234,7 @@ namespace PDFREAD{
     read_obj_offsets(file);
 
     read_root_obj(file);
+    read_page_collector(file);
   }
  
   void Shutdonw()
