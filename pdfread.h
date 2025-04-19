@@ -35,7 +35,7 @@ namespace PDFREAD
   struct page_collection
   {
     uint32_t id;
-    uint32_t* mPages;
+    std::vector<int> mPages;
     uint32_t nPages = 0;
   };
   

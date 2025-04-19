@@ -8,7 +8,8 @@ int m =9;
 
 namespace PDFREAD{
 
-  extern std::array<const std::string, 10> type_string{ "/Catalog","/Pages","Page" };
+  std::array<const std::string, 10> type_string{ "/Catalog","/Pages","Page" };
+  std::unordered_map<char, char> pair = { {'[',']'},{'{','}'},{'(',')'}};
   filedata* data;
 
   int get_length_to(std::string& line, int start , char stop = ' ')
@@ -27,7 +28,36 @@ namespace PDFREAD{
     return x;
   }
 
-  
+  std::vector<int> get_array_objs(std::string& line, int start)
+  {
+      std::vector<int> r;
+      char h = line[start];
+      int objs_start = start + 1;//Plus 1 to skip the opening braces
+
+      if (pair.find(h) == pair.end())
+      {
+          std::cout << "[ERROR]:[SYNTHAX]:::Invalid PDF Container Synthax...\n";
+          return std::vector<int>();
+      }
+
+      
+      int a = get_length_to(line, start, pair[h]);  //Get length to its closing brackets...
+      std::string linear_data = line.substr(objs_start, a); //Store length to its closing brackets
+      int T = linear_data.length() - 1; //Remove \n
+
+      //Formula for finding number of objects in array
+      int tD = T / 5;
+      int tDD = static_cast<int>(tD/5);
+      int nObjs = static_cast<int>(tD) - tDD;
+
+      for (int i = 0; i < nObjs * 6; i+=6)
+      {
+          int index = i + objs_start;
+          int int_length = get_length_to(line, index);
+          r.push_back(std::stoi(line.substr(index, int_length)));
+      }
+      return r;
+  }
 
   int has_key(std::string& line, const std::string& key)
   {
@@ -88,15 +118,22 @@ namespace PDFREAD{
       {
         int x = get_length_to(line, start);
         data->root->pages->nPages = std::stoi(line.substr(start, x));
-        data->root->pages->mPages = new uint32_t[data->root->pages->nPages];
         std::cout << "Page Count::: " << data->root->pages->nPages << std::endl;
       }
       search = "/Kids ";
       start = has_key(line, search);
+      if (start)
+      {
+          data->root->pages->mPages = get_array_objs(line, start);
+          if (data->root->pages->mPages.size() == data->root->pages->nPages)
+          {
+              //Todo: Page number info does not match...
+              //Todo: This is a ::PDFFix feature to be implemented later...
+              std::cout << "Page number indicated and pages found do not match\n";
+          }
+          continue;
+      }
       std::string subbed = line.substr(start);
-      std::cout << "Kids Raw::: " << subbed << std::endl;
-
-      //Read kids
    }
   }
   // add breaks when we are certain we dont need anything else;
@@ -215,7 +252,7 @@ namespace PDFREAD{
   void Initialize()
   {
 
-    std::ifstream file("samplepdf2.pdf",std::ios::binary);
+    std::ifstream file("samplepdf.pdf",std::ios::binary);
     if(!file.is_open())
     {
       std::cout<<"Could not open file...\n";
@@ -235,6 +272,7 @@ namespace PDFREAD{
 
     read_root_obj(file);
     read_page_collector(file);
+    std::cout << "Data:pages::: " << data->root->pages->nPages;
   }
  
   void Shutdonw()
