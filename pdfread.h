@@ -13,6 +13,7 @@ namespace PDFREAD
   {
     size_t file_bytes;
     size_t xref_start;
+    size_t xref_start_c;
     size_t num_obj; 
     
     std::vector<std::array<int,3>> obj_offsets;

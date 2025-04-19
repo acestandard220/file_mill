@@ -1,6 +1,7 @@
 #include "pdfread.h"
 #include <algorithm>
 #include <fstream>
+#include <iostream>
 #include <ostream>
 #include <string>
 int m =9;
@@ -28,7 +29,8 @@ namespace PDFREAD{
       if(found)
       {
         int value = std::stoi(line);
-        data->xref_start = value; 
+        data->xref_start = value;
+        std::cout<<"XREF::: "<<value<<std::endl;
         break;
       }
     }
@@ -46,9 +48,23 @@ namespace PDFREAD{
       int line_length = line.length();
       
       if(line_index != std::string::npos)
-      {          
-         data->num_obj = std::stoi(line.substr(line_index + search_length,line_length - line_index - search_length));
-        continue;
+      {  
+         if(file->tellg() < data->xref_start)
+         {
+             continue; //skip any /Size attribute before the xref...
+         }
+         int integer_length = 0;
+         for(int i = 0; i < line_length - line_index - search_length; i++)
+         {
+           if(line[i + line_index + search_length] != ' ')
+           {
+             integer_length++;
+           }
+         }
+         data->num_obj = std::stoi(line.substr(line_index + search_length,integer_length));
+         data->obj_offsets.resize(data->num_obj);
+         //std::cout<<"Num_Obj::: "<<data->num_obj<<std::endl;
+         continue;
       }
       
       search = "/Root ";
@@ -59,9 +75,16 @@ namespace PDFREAD{
 
       if(line_index != std::string::npos)
       {
-        data->root->id = std::stoi(line.substr(line_index + search_length, line_length - line_index - search_length));
-      }
-      else {
+        int integer_length = 0;
+        for(int i = 0; i < line_length - line_index - search_length; i++)
+        {
+          if(line[i + line_index + search_length] != ' ')
+          {
+            integer_length++;
+          }
+        }
+        data->root->id = std::stoi(line.substr(line_index + search_length, integer_length));
+        //std::cout<<"ss:: "<<data->root->id<<std::endl;
         break;
       }
     }
@@ -71,25 +94,24 @@ namespace PDFREAD{
   {
     std::string line;
 
-    file.seekg(data->xref_start);
+    file.seekg(data->xref_start); 
     std::getline(file,line);//read: xref
     std::getline(file,line);//read: 0-xxx 
 
     for(int i = 0; i< data->num_obj;i++)
-    {
-      std::cout<<"Reading Object "<<i<<" offset.\n";
+    {  
       std::getline(file,line);
 
       data->obj_offsets[i][0] = std::stoi(line.substr(0,10));
       data->obj_offsets[i][1] = std::stoi(line.substr(11,5));
-      data->obj_offsets[i][2] = -1; //todo: read f as 0 & n as 1 
+      data->obj_offsets[i][2] = (line.substr(17, 1) == "f") ? 0 : 1; //NOTE: f = 0 && n = 1
     }
   }
 
   void Initialize()
   {
 
-    std::ifstream file("samplepdf.pdf",std::ios::binary);
+    std::ifstream file("samplepdf2.pdf",std::ios::binary);
     if(!file.is_open())
     {
       std::cout<<"Could not open file...\n";
