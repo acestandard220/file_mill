@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
+#include <sstream>
 
 
 namespace PDFREAD
@@ -25,7 +26,11 @@ namespace PDFREAD
 
   struct media_box
   {
-      int x, y, w, h;
+      int _x, _y, _w, _h;
+      media_box() = default;
+      media_box(int x,int y,int w,int h)
+          :_x(x), _y(y), _w(w), _h(h)
+      { }
   };
 
   struct filedata
@@ -37,9 +42,9 @@ namespace PDFREAD
     
     root_node* root = nullptr;
     
-    std::vector<std::array<int,3>> obj_offsets;
-    std::vector<media_box> cMediaBox;
-    std::vector<page*> cPage;
+    std::vector<std::array<int, 3>> obj_offsets;
+    std::unordered_map<uint32_t, media_box> cMediaBox;
+    std::unordered_map<uint32_t, std::vector<uint32_t>> cContent;
   };
 
   struct page_collection
@@ -54,7 +59,6 @@ namespace PDFREAD
   {
     uint32_t id;
     uint32_t parent;
-    uint32_t mMediaBbox;
     uint32_t* mContents;
   };
 

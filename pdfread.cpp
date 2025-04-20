@@ -28,7 +28,7 @@ namespace PDFREAD {
         return x;
     }
 
-    std::vector<int> get_array_objs(std::string& line, int start) //todo: merge with beta idea
+    std::vector<int> get_array_objs(std::string& line, int start) //todo: use get_array_objs_x idea
     {
         std::vector<int> r;
         char h = line[start];
@@ -49,41 +49,31 @@ namespace PDFREAD {
         int tDD = static_cast<int>(tD / 5);
         int nObjs = static_cast<int>(tD) - tDD;
 
+        int prev_increment = 0;
         for (int i = 0; i < nObjs * 6; i += 6)
         {
-            int index = i + objs_start;
+            int index = i + objs_start + prev_increment;
             int int_length = get_length_to(line, index);
+            prev_increment += int_length - 1;
             r.push_back(std::stoi(line.substr(index, int_length)));
         }
         return r;
     }
-
-    std::vector<int> get_array_objs2(std::string& line, int start, int obj_blocks, int spacing = 1) //todo:beta
+    //Read 4 values from an array [x x x x]
+    std::vector<int> get_array_objs_x(std::string& line, int start, char delimiter = ' ')
     {
+        //0123456789A
+        //0 0 900  900
         std::vector<int> r;
-        char h = line[start];
-        int objs_start = start + 1; //Plus 1 to skip the opening braces
+        int obj_start = start + 1;
+        int length_to_close = get_length_to(line, obj_start, pair[line[start]]);
+        std::string linear_data = line.substr(obj_start, length_to_close);
 
-        if (pair.find(h) == pair.end())
+        std::string value;
+        std::stringstream stream(linear_data);
+        while (std::getline(stream, value,delimiter))
         {
-            std::cout << "[ERROR]:[SYNTHAX]:::Invalid PDF Container Synthax...\n";
-            return std::vector<int>();
-        }
-
-        int a = get_length_to(line, start, pair[h]);  //Get length to its closing brackets...
-        std::string linear_data = line.substr(objs_start, a); //Store length to its closing brackets
-        int T = linear_data.length() - 1; //Remove \n
-
-        //Formula for finding number of objects in array
-        int tD = T / obj_blocks;
-        int tDD = static_cast<int>(tD / obj_blocks);
-        int nObjs = static_cast<int>(tD) - tDD;
-
-        for (int i = 0; i < nObjs * obj_blocks + spacing; i += obj_blocks)
-        {
-            int index = i + objs_start;
-            int int_length = get_length_to(line, index);
-            r.push_back(std::stoi(line.substr(index, int_length)));
+            r.push_back(std::stoi(value));
         }
         return r;
     }
@@ -95,9 +85,7 @@ namespace PDFREAD {
         if (line.find(key) != std::string::npos)
         {
             return line_index + search_length; //true
-        }
-        else
-        {
+        } else {
             return 0; //false
         }
     }
@@ -146,7 +134,8 @@ namespace PDFREAD {
                 start = has_key(line, "/MediaBox ");
                 if (start)
                 {
-                    //get_array_objs2(line, start)
+                    auto g = get_array_objs_x(line, start, ' ');
+                    data->cMediaBox[page_obj_index] = media_box (g[0], g[1], g[2], g[3]);
                 }
             }
         }
@@ -183,8 +172,7 @@ namespace PDFREAD {
             if (start)
             {
                 data->root->pages->mPages = get_array_objs(line, start);
-                data->cPage.resize(data->root->pages->nPages);
-                data->cMediaBox.resize(data->root->pages->nPages);
+               
                 if (data->root->pages->mPages.size() == data->root->pages->nPages)
                 {
                     //Todo: Page number info does not match...
@@ -236,7 +224,6 @@ namespace PDFREAD {
         }
     }
 
-    //todo: Integrate With read_trailer_info
     void read_start_xref(std::ifstream* file)
     {
         std::string line;
@@ -336,7 +323,7 @@ namespace PDFREAD {
 
         read_root_obj(file);
         read_page_collector(file);
-        std::cout << "Data:pages::: " << data->root->pages->nPages;
+        read_page_data(file);
     }
 
     void Shutdonw()
