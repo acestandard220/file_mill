@@ -28,38 +28,6 @@ namespace PDFREAD {
         return x;
     }
 
-    //std::vector<int> get_array_objs(std::string& line, int start) //todo: use get_array_objs_x idea
-    //{
-    //    std::vector<int> r;
-    //    char h = line[start];
-    //    int objs_start = start + 1; //Plus 1 to skip the opening braces
-
-    //    if (pair.find(h) == pair.end())
-    //    {
-    //        std::cout << "[ERROR]:[SYNTHAX]:::Invalid PDF Container Synthax...\n";
-    //        return std::vector<int>();
-    //    }
-
-    //    int a = get_length_to(line, start, pair[h]);  //Get length to its closing brackets...
-    //    std::string linear_data = line.substr(objs_start, a); //Store length to its closing brackets
-    //    int T = linear_data.length() - 1; //Remove \n
-
-    //    //Formula for finding number of objects in array
-    //    int tD = T / 5;
-    //    int tDD = static_cast<int>(tD / 5);
-    //    int nObjs = static_cast<int>(tD) - tDD;
-
-    //    int prev_increment = 0;
-    //    for (int i = 0; i < nObjs * 6; i += 6)
-    //    {
-    //        int index = i + objs_start + prev_increment;
-    //        int int_length = get_length_to(line, index);
-    //        prev_increment += int_length - 1;
-    //        r.push_back(std::stoi(line.substr(index, int_length)));
-    //    }
-    //    return r;
-    //}
-
     std::vector<int> get_array_objs(std::string& line, int start, char delimiter = ' ')
     {
         std::vector<int> r;
@@ -73,19 +41,9 @@ namespace PDFREAD {
         bool first = true;
         while (std::getline(stream, value, 'R'))
         {
-            int len = 0;
-            std::string _v;
-            if(first)
-            {
-                len = get_length_to(value, 0);
-                _v = value.substr(0, len);
-                first = false;
-            }
-            else {
-                len = get_length_to(value, 1);
-                _v = value.substr(1, len);
-            }
-
+            int index = value[0] != ' ' ? 0:1;
+            int len = get_length_to(value, index);
+            std::string _v = value.substr(index, len);       
             try
             {
                 r.push_back(std::stoi(_v));
@@ -117,7 +75,20 @@ namespace PDFREAD {
         std::stringstream stream(linear_data);
         while (std::getline(stream, value,delimiter))
         {
-            r.push_back(std::stoi(value));
+            try
+            {
+                r.push_back(std::stoi(value));
+            }
+            catch (std::invalid_argument& e)
+            {
+                std::cout << "Corrupt XREF...\n";
+                std::vector<int>();
+            }
+            catch (std::out_of_range& e)
+            {
+                std::cout << "Corrupt XREF...\n";
+                std::vector<int>();
+            }
         }
         return r;
     }
