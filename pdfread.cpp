@@ -82,12 +82,45 @@ namespace PDFREAD {
             catch (std::invalid_argument& e)
             {
                 std::cout << "Corrupt XREF...\n";
-                std::vector<int>();
+                return std::vector<int>();
             }
             catch (std::out_of_range& e)
             {
                 std::cout << "Corrupt XREF...\n";
-                std::vector<int>();
+                return std::vector<int>();
+            }
+        }
+        return r;
+    }
+    //todo: think about delimiter param
+    std::vector<uint32_t> get_indirect_array_obj(std::string& line, int start, char delimiter = ' ')
+    {
+        std::vector<uint32_t> r;
+        int objs_start = start;
+        int len = get_length_to(line, objs_start, '/');
+        std::string linear_data = line.substr(objs_start, len);
+
+        std::string value;
+        std::stringstream stream(linear_data);
+        while (std::getline(stream, value))
+        {
+            int index = value[0] != ' ' ? 0 : 1;
+            int len = get_length_to(value, index);
+            std::string _v = value.substr(index, len);
+
+            try
+            {
+                r.push_back(std::stoi(_v));
+            }
+            catch(std::invalid_argument& e)
+            {
+                std::cout << "Corrupt XREF...\n";
+                return std::vector<uint32_t>();
+            }
+            catch (std::out_of_range& e)
+            {
+                std::cout << "Corrupt XREF...\n";
+                return std::vector<uint32_t>();
             }
         }
         return r;
@@ -159,11 +192,11 @@ namespace PDFREAD {
                     data->cMediaBox[page_obj_index] = media_box (g[0], g[1], g[2], g[3]);
                 }
 
-                start = has_key(line, "/Content ");
+                start = has_key(line, "/Contents ");
                 if (start)
                 {
-                    int len_of_contents = get_length_to(line, start, '/');
-                    std::string l = line.substr(start, len_of_contents);
+                    data->cContent[page_obj_index] = get_indirect_array_obj(line, start);
+                    std::cout<<"";
                 }
             }
         }
