@@ -28,39 +28,83 @@ namespace PDFREAD {
         return x;
     }
 
-    std::vector<int> get_array_objs(std::string& line, int start) //todo: use get_array_objs_x idea
+    //std::vector<int> get_array_objs(std::string& line, int start) //todo: use get_array_objs_x idea
+    //{
+    //    std::vector<int> r;
+    //    char h = line[start];
+    //    int objs_start = start + 1; //Plus 1 to skip the opening braces
+
+    //    if (pair.find(h) == pair.end())
+    //    {
+    //        std::cout << "[ERROR]:[SYNTHAX]:::Invalid PDF Container Synthax...\n";
+    //        return std::vector<int>();
+    //    }
+
+    //    int a = get_length_to(line, start, pair[h]);  //Get length to its closing brackets...
+    //    std::string linear_data = line.substr(objs_start, a); //Store length to its closing brackets
+    //    int T = linear_data.length() - 1; //Remove \n
+
+    //    //Formula for finding number of objects in array
+    //    int tD = T / 5;
+    //    int tDD = static_cast<int>(tD / 5);
+    //    int nObjs = static_cast<int>(tD) - tDD;
+
+    //    int prev_increment = 0;
+    //    for (int i = 0; i < nObjs * 6; i += 6)
+    //    {
+    //        int index = i + objs_start + prev_increment;
+    //        int int_length = get_length_to(line, index);
+    //        prev_increment += int_length - 1;
+    //        r.push_back(std::stoi(line.substr(index, int_length)));
+    //    }
+    //    return r;
+    //}
+
+    std::vector<int> get_array_objs(std::string& line, int start, char delimiter = ' ')
     {
         std::vector<int> r;
-        char h = line[start];
-        int objs_start = start + 1; //Plus 1 to skip the opening braces
+        int objs_start = start + 1;
+        int length_to_close = get_length_to(line, objs_start, pair[line[start]]);
+        std::string linear_data = line.substr(objs_start, length_to_close);
 
-        if (pair.find(h) == pair.end())
+        std::string value;
+        std::stringstream stream(linear_data);
+
+        bool first = true;
+        while (std::getline(stream, value, 'R'))
         {
-            std::cout << "[ERROR]:[SYNTHAX]:::Invalid PDF Container Synthax...\n";
-            return std::vector<int>();
-        }
+            int len = 0;
+            std::string _v;
+            if(first)
+            {
+                len = get_length_to(value, 0);
+                _v = value.substr(0, len);
+                first = false;
+            }
+            else {
+                len = get_length_to(value, 1);
+                _v = value.substr(1, len);
+            }
 
-        int a = get_length_to(line, start, pair[h]);  //Get length to its closing brackets...
-        std::string linear_data = line.substr(objs_start, a); //Store length to its closing brackets
-        int T = linear_data.length() - 1; //Remove \n
-
-        //Formula for finding number of objects in array
-        int tD = T / 5;
-        int tDD = static_cast<int>(tD / 5);
-        int nObjs = static_cast<int>(tD) - tDD;
-
-        int prev_increment = 0;
-        for (int i = 0; i < nObjs * 6; i += 6)
-        {
-            int index = i + objs_start + prev_increment;
-            int int_length = get_length_to(line, index);
-            prev_increment += int_length - 1;
-            r.push_back(std::stoi(line.substr(index, int_length)));
+            try
+            {
+                r.push_back(std::stoi(_v));
+            }
+            catch (const std::invalid_argument& e)
+            {
+                std::cout << "Does not contain object index index: Invalid XREF";
+                return std::vector<int>();
+            }
+            catch (const std::out_of_range& e)
+            {
+                std::cout << "Number is too huge\n";
+                return std::vector<int>();
+            }
         }
         return r;
     }
     //Read 4 values from an array [x x x x]
-    std::vector<int> get_array_objs_x(std::string& line, int start, char delimiter = ' ')
+    std::vector<int> get_array_values(std::string& line, int start, char delimiter = ' ')
     {
         //0123456789A
         //0 0 900  900
@@ -90,6 +134,7 @@ namespace PDFREAD {
         }
     }
 
+   
     bool validate_obj_type(std::string& line, type_index type)
     {
         const std::string temp = "/Type ";
@@ -109,6 +154,11 @@ namespace PDFREAD {
     bool end_of_obj(std::string& line)
     {
         return (line.find(type_string[ENDOBJ]) != std::string::npos);
+    }
+
+    void read_font_obj(std::ifstream& file)
+    {
+
     }
 
     void read_page_data(std::ifstream& file)
@@ -134,8 +184,15 @@ namespace PDFREAD {
                 start = has_key(line, "/MediaBox ");
                 if (start)
                 {
-                    auto g = get_array_objs_x(line, start, ' ');
+                    auto g = get_array_values(line, start, ' ');
                     data->cMediaBox[page_obj_index] = media_box (g[0], g[1], g[2], g[3]);
+                }
+
+                start = has_key(line, "/Content ");
+                if (start)
+                {
+                    int len_of_contents = get_length_to(line, start, '/');
+                    std::string l = line.substr(start, len_of_contents);
                 }
             }
         }

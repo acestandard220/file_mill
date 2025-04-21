@@ -33,6 +33,7 @@ namespace PDFREAD
       { }
   };
 
+
   struct filedata
   {
     size_t file_bytes;
@@ -44,7 +45,8 @@ namespace PDFREAD
     
     std::vector<std::array<int, 3>> obj_offsets;
     std::unordered_map<uint32_t, media_box> cMediaBox;
-    std::unordered_map<uint32_t, std::vector<uint32_t>> cContent;
+    std::unordered_map <uint32_t, std::array<std::vector<uint32_t>, 5>>cResources; // array size might change
+    std::unordered_map <uint32_t, std::vector<uint32_t>> cContent;
   };
 
   struct page_collection
