@@ -8,7 +8,7 @@ int m = 9;
 
 namespace PDFREAD {
 
-    std::array<const std::string, 10> type_string{ "/Catalog", "/Pages", "Page", "endobj" };
+    std::array<const std::string, _type_index_last> type_string{ "/Catalog", "/Pages", "Page", "endobj" };
     std::unordered_map<char, char> pair = { {'[', ']'}, {'{', '}'}, {'(', ')'} };
     filedata* data;
 
@@ -28,9 +28,19 @@ namespace PDFREAD {
         return x;
     }
 
-    std::vector<int> get_array_objs(std::string& line, int start, char delimiter = ' ')
+    int get_length_to_not(std::string& line,char delimiter = ' ')
     {
-        std::vector<int> r;
+        int index = 0;
+        while (line[index] == delimiter)
+        {
+            index++;
+        }
+        return index;
+    }
+
+    std::vector<uint32_t> get_array_objs(std::string& line, int start, char delimiter = ' ')
+    {
+        std::vector<uint32_t> r;
         int objs_start = start + 1;
         int length_to_close = get_length_to(line, objs_start, pair[line[start]]);
         std::string linear_data = line.substr(objs_start, length_to_close);
@@ -51,29 +61,89 @@ namespace PDFREAD {
             catch (const std::invalid_argument& e)
             {
                 std::cout << "Does not contain object index index: Invalid XREF";
-                return std::vector<int>();
+                return std::vector<uint32_t>();
             }
             catch (const std::out_of_range& e)
             {
                 std::cout << "Number is too huge\n";
-                return std::vector<int>();
+                return std::vector<uint32_t>();
             }
         }
         return r;
     }
+
+    std::pair<std::string, uint32_t> get_dict_key_value_indirect_obj(std::string line, int start)
+    {
+        if (line.empty() || line.length() <= 1) { return std::pair<std::string, uint32_t>(); }
+        int key_len = get_length_to(line, start, ' ');
+        std::string _key = line.substr(start + 1, key_len);
+
+        int value_len = get_length_to(line, start + key_len + 1);
+        int _value = std::stoi(line.substr(start + key_len + 1, value_len));
+
+        return std::pair<std::string, uint32_t>(_key, _value);
+    }
+
+    void _remove_special_chars(std::string& line)
+    {
+        for (int i = 0; i < line.length();)
+        {
+            if (line[i] == '\n')
+            {
+                line.erase(i, 1);
+            }
+            else if (line[i] == '\r')
+            {
+                line.erase(i, 1);
+            }
+            else
+            {
+                i++;
+            }
+        }
+    }
+
+    void _remove_redun_spaces(std::string& line)
+    {        
+        int front_c = get_length_to_not(line);
+        line = line.substr(front_c);
+        for (int i = 0; i < line.length();)
+        {
+            if (line[i] == ' ' && line[i+1] == ' ')
+            {
+                line.erase(i,1);
+            }
+            else if (line[i] == ' ' && line[i + 1] == '\n')
+            {
+                line.erase(i, 1);
+            }
+            else
+            {
+                i++;
+            }
+        }
+    }
+
+    void dress_string(std::string& line)
+    {
+        _remove_special_chars(line);
+        _remove_redun_spaces(line);
+    }
+
+ 
     //Read 4 values from an array [x x x x]
-    std::vector<int> get_array_values(std::string& line, int start, char delimiter = ' ')
+    std::vector<uint32_t> get_array_values(std::string& line, int start, char delimiter = ']')
     {
         //0123456789A
         //0 0 900  900
-        std::vector<int> r;
+        std::vector<uint32_t> r;
         int obj_start = start + 1;
-        int length_to_close = get_length_to(line, obj_start, pair[line[start]]);
+        int length_to_close = get_length_to(line, obj_start, delimiter);
         std::string linear_data = line.substr(obj_start, length_to_close);
 
         std::string value;
         std::stringstream stream(linear_data);
-        while (std::getline(stream, value,delimiter))
+        while (std::getline(stream, value, ' '))
         {
             try
             {
@@ -82,22 +152,23 @@ namespace PDFREAD {
             catch (std::invalid_argument& e)
             {
                 std::cout << "Corrupt XREF...\n";
-                return std::vector<int>();
+                return std::vector<uint32_t>();
             }
             catch (std::out_of_range& e)
             {
                 std::cout << "Corrupt XREF...\n";
-                return std::vector<int>();
+                return std::vector<uint32_t>();
             }
         }
         return r;
     }
     //todo: think about delimiter param
+    //becareful with reading array due to current delimiter might shoot your self in the leg
     std::vector<uint32_t> get_indirect_array_obj(std::string& line, int start, char delimiter = ' ')
     {
         std::vector<uint32_t> r;
         int objs_start = start;
-        int len = get_length_to(line, objs_start, '/');
+        int len = get_length_to(line, objs_start, delimiter);
         std::string linear_data = line.substr(objs_start, len);
 
         std::string value;
@@ -137,7 +208,6 @@ namespace PDFREAD {
             return 0; //false
         }
     }
-
    
     bool validate_obj_type(std::string& line, type_index type)
     {
@@ -171,7 +241,10 @@ namespace PDFREAD {
         for (auto& page_obj_index : data->root->pages->mPages)
         {
             file.clear();
-            file.seekg(data->obj_offsets[page_obj_index][0], std::ios::beg);
+            file.seekg(data->obj_offsets[page_obj_index][BYTE_OFFSET], std::ios::beg);
+
+            data->cPage[page_obj_index] = Page(page_obj_index);
+
 
             while (std::getline(file, line))
             {
@@ -188,15 +261,54 @@ namespace PDFREAD {
                 start = has_key(line, "/MediaBox ");
                 if (start)
                 {
-                    auto g = get_array_values(line, start, ' ');
-                    data->cMediaBox[page_obj_index] = media_box (g[0], g[1], g[2], g[3]);
+                    auto g = get_array_values(line, start, pair[line[start]]);
+                    data->cPage[page_obj_index].media_box = media_box(g[X], g[Y], g[W], g[H]);
                 }
 
                 start = has_key(line, "/Contents ");
                 if (start)
                 {
-                    data->cContent[page_obj_index] = get_indirect_array_obj(line, start);
-                    std::cout<<"";
+                    data->cPage[page_obj_index].rContents = get_indirect_array_obj(line, start, '/');
+                }
+
+                start = has_key(line, "/Resources ");
+                if (start)
+                {
+                    std::string resource_block;
+                    //Pull the entire resource dictionary
+                    //Get line was used here and not on pulling specific res. 
+                    // because this one could have occupied mutiple lines
+                    int open_dict = 0;
+                    do
+                    {
+                        resource_block += line + "\n";
+                        for (auto& x : line)
+                        {
+                            if (x == '<') { open_dict++; }
+                            else if (x == '>') { open_dict--; }
+                        }
+
+                        if (!open_dict) { break; }
+
+                    } while (std::getline(file, line));
+                    dress_string(resource_block);
+                    
+                    //Now read individual resources
+                    int _start = has_key(resource_block, "/Font ");
+                    int len = get_length_to(resource_block, _start, '>');
+                    std::string res_line = resource_block.substr(_start + 2, len - 2);
+                    
+                    std::string res_data;
+                    std::stringstream _stream(res_line);
+                    int index = 0;
+                    while (std::getline(_stream, res_data, 'R'))
+                    {
+                        index += index == 0 ? 1 : 0;
+                        auto g = get_dict_key_value_indirect_obj(res_data, index);
+                        data->cPage[page_obj_index].rFonts[g.first] = g.second;
+                        //Here....
+                    }
+
                 }
             }
         }
@@ -204,7 +316,7 @@ namespace PDFREAD {
 
     void read_page_collector(std::ifstream& file)
     {
-        file.seekg(data->obj_offsets[data->root->pages->id][0]);
+        file.seekg(data->obj_offsets[data->root->pages->id][BYTE_OFFSET]);
         std::string line;
 
         while (std::getline(file, line))
@@ -242,7 +354,6 @@ namespace PDFREAD {
                 }
                 continue;
             }
-            std::string subbed = line.substr(start);
         }
     }
 
@@ -250,16 +361,12 @@ namespace PDFREAD {
     void read_root_obj(std::ifstream& file)
     {
         file.clear();
-        file.seekg(data->obj_offsets[data->root->id][0]);
+        file.seekg(data->obj_offsets[data->root->id][BYTE_OFFSET]);
         std::string line;
 
         while (std::getline(file, line))
         {
-            if (line.find(type_string[ENDOBJ]) != std::string::npos)
-            {
-                std::cout << "End of object reached\n";
-                break;
-            }
+            if (end_of_obj(line)) { break; }
 
             std::string search = "/Type ";
             int start = has_key(line, search);
@@ -356,14 +463,15 @@ namespace PDFREAD {
         {
             std::getline(file, line);
 
-            data->obj_offsets[i][0] = std::stoi(line.substr(0, 10));
-            data->obj_offsets[i][1] = std::stoi(line.substr(11, 5));
-            data->obj_offsets[i][2] = (line.substr(17, 1) == "f") ? 0 : 1; //NOTE: f = 0 && n = 1
+            data->obj_offsets[i][BYTE_OFFSET] = std::stoi(line.substr(0, 10));
+            data->obj_offsets[i][UID] = std::stoi(line.substr(11, 5));
+            data->obj_offsets[i][FLAG] = (line.substr(17, 1) == "f") ? 0 : 1; //NOTE: f = 0 && n = 1
         }
     }
 
     void Initialize()
     {
+
         std::ifstream file("samplepdf.pdf", std::ios::binary);
         if (!file.is_open())
         {
