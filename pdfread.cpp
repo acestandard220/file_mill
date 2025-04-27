@@ -8,7 +8,7 @@ int m = 9;
 
 namespace PDFREAD {
 
-    std::array<const std::string, _type_index_last> type_string{ "/Catalog", "/Pages", "Page", "endobj" };
+    std::array<const std::string, _type_index_last> type_string{ "/Catalog", "/Pages", "Page", "endobj","/Font","/Contents"};
     
     std::unordered_map<char, char> pair = { {'[', ']'}, {'{', '}'}, {'(', ')'} };
     std::array<const std::string, base_font_last> base_font_string{ "/Helvetica","/ZapfDingbats" };
@@ -332,6 +332,8 @@ namespace PDFREAD {
         for(auto index : contents)
         {
             auto& con = data->cContent[index];
+            con = Content(index);
+            //Check if the reference updates the actual values...
             std::string content_block;
 
             read_data_block(file, content_block, data->obj_offsets[index][BYTE_OFFSET], type_string[ENDOBJ]);
@@ -341,7 +343,12 @@ namespace PDFREAD {
             if (start)
             {
                 auto x = get_dict_key_value_indirect_obj(content_block, start - 8);
-                con
+                con.stream_length = x.second;
+            }
+
+            start = has_key(content_block, "BT");
+            if (start)
+            {
                 
             }
         }

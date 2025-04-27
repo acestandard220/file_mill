@@ -30,6 +30,7 @@ namespace PDFREAD
         PAGE,
         ENDOBJ,
         FONT,
+        CONTENT,
         _type_index_last // Make sure it's always last
         // NOTE: Don't forget to update array size after additions...
     };
@@ -72,7 +73,7 @@ namespace PDFREAD
     struct Page;
     struct Object;
     struct Font;
-    //struct Content;
+    struct Content;
 
     struct media_box
     {
@@ -154,9 +155,37 @@ namespace PDFREAD
         //To fiilll...
     };
 
+    struct _tf
+    {
+        std::string tag;//might change
+        uint16_t size;
+        const std::string id = "Tf";
+    };
+    struct _tm
+    {
+        int32_t a, b, c, d, e, f;
+    };
+    struct _tj
+    {
+        std::string text = "";
+    };
+
+    struct TextBlock
+    {
+        _tf* Tf;
+        _tm* Tm;
+        _tj* Tj;
+    };
+
     struct Content : public Object
     {
+        Content() = default;
+        Content(uint32_t _id)
+            :Object(_id, CONTENT)
+        {
+        }
         size_t stream_length = 0;
+        std::vector<TextBlock> BT_ETs;
     };
 
     struct root_node
