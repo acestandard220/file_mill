@@ -23,7 +23,7 @@ endobj
     >>
     /ProcSet [/PDF /Text]
   >>
-  /MediaBox [0 0 900 900]
+  /MediaBox [0 0 400 900]
   /Contents 4 0 R
 >>
 endobj
@@ -65,7 +65,7 @@ endobj
     >>
     /ProcSet [/PDF /Text]
   >>
-  /MediaBox [0 0 500 500]
+  /MediaBox [0 0 900 900]
   /Contents 9 0 R
   /Annots [12 0 R]
 >>
@@ -84,9 +84,9 @@ endobj
 >>
 stream
 BT
-/F3 60 Tf
+/F3 24 Tf
 1 0 0 1 50 50 Tm
-(This is new page) Tj
+(FFFF is new page) Tj
 ET
 endstream
 endobj

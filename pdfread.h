@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 #include <sstream>
+#include <set>
 
 namespace PDFREAD
 {
@@ -33,6 +34,27 @@ namespace PDFREAD
         // NOTE: Don't forget to update array size after additions...
     };
 
+
+    enum sub_type_index
+    {
+        TYPE1,
+        TYPE2
+    };
+
+    enum base_font
+    {
+        HELVETICA,
+        ZAPFDINGBATS,
+
+        base_font_last
+    };
+
+    enum encoding
+    {
+        WINANSIENCODING,
+
+        encoding_last
+    };
     enum resource_type
     {
         RES_FONT,
@@ -41,11 +63,17 @@ namespace PDFREAD
     };
 
     extern std::array<const std::string, _type_index_last> type_string;
+    extern std::array<const std::string, base_font_last> base_font_string;
+    extern std::array<const std::string, base_font_last> encoding_string;
+    
+
 
     struct root_node;
     struct Page;
     struct Object;
     struct Font;
+    //struct Content;
+
     struct media_box
     {
         int _x, _y, _w, _h;
@@ -67,9 +95,11 @@ namespace PDFREAD
         root_node* root = nullptr;
 
         std::vector<std::array<int, _xref_values_last>> obj_offsets;
+        std::vector<bool> read_objects;//keep track of objects that have been read
 
         std::unordered_map<uint32_t, Page> cPage;
         std::unordered_map<uint32_t, Font> cFont;
+        std::unordered_map<uint32_t, Content> cContent;
 
     };
 
@@ -106,6 +136,7 @@ namespace PDFREAD
         media_box media_box;
         std::vector<uint32_t> rContents;// reference to its content objects;
         std::unordered_map<std::string, uint32_t> rFonts;
+        std::vector<std::string> cProcSet;
     };
 
 
@@ -117,7 +148,15 @@ namespace PDFREAD
         {
         }
 
+        sub_type_index sub_type;
+        base_font base_font;
+        encoding encoding;
         //To fiilll...
+    };
+
+    struct Content : public Object
+    {
+        size_t stream_length = 0;
     };
 
     struct root_node
