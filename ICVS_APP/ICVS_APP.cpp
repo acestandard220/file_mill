@@ -7,6 +7,8 @@
 
 #include <iostream>
 
+#include "../pdfread.h"
+
 int win_width = 1280;
 int win_height = 1024;
 
@@ -68,6 +70,10 @@ void render_()
 
 int main()
 {
+
+    //PDFREAD::Initialize();
+    PDFREAD::ShutDown();
+
     glfwInit();
     GLFWwindow* window = glfwCreateWindow(win_width, win_height, "ICVS", nullptr, nullptr);
     glfwMakeContextCurrent(window);
