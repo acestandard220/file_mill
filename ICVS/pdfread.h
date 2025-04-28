@@ -14,7 +14,7 @@
 #endif
 
 
-
+std::string current_path;
 namespace PDFREAD
 {
     // Don't touch
@@ -207,6 +207,6 @@ namespace PDFREAD
     extern "C" ICVS_DLL void ShutDown();
 
 
-    extern "C" ICVS_DLL void TestFunction();
+    extern "C" ICVS_DLL void RequestPath(const char* path);
     
 }

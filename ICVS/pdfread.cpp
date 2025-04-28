@@ -83,7 +83,7 @@ namespace PDFREAD {
 
     std::pair<std::string, uint32_t> get_dict_key_value_indirect_obj(std::string line, int start)
     {
-        if (line.empty() || line.length() <= 1) { return std::pair<std::string, uint32_t>(); }
+        if (line.empty() || line.length()-1 <= 1) { return std::pair<std::string, uint32_t>("",0); }
         int key_len = get_length_to(line, start, ' ');
         std::string _key = line.substr(start + 1, key_len);
 
@@ -429,6 +429,7 @@ namespace PDFREAD {
                     {
                         index += index == 0 ? 1 : 0;
                         auto g = get_dict_key_value_indirect_obj(res_data, index);
+                        if (g.second == 0) { continue; } // -1 is code for empty in this context
                         data->cPage[page_obj_index].rFonts[g.first] = g.second;
                         _font_obj.insert(g.second);
                     }
@@ -612,7 +613,7 @@ namespace PDFREAD {
     void Initialize()
     {
 
-        std::ifstream file("samplepdf.pdf", std::ios::binary);
+        std::ifstream file(current_path, std::ios::binary);
         if (!file.is_open())
         {
             std::cout << "Could not open file...\n";
@@ -640,10 +641,9 @@ namespace PDFREAD {
         std::cout << "Shutdown function has beend called\n";
     }
 
-    void TestFunction()
+    void RequestPath(const char* path)
     {
-        std::cout << "Hello World\n";
+        current_path = path;
     }
 
- 
 }

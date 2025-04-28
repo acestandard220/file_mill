@@ -54,6 +54,15 @@ void render_()
     ImGui::Text("%s", "This is a test window");
     
     ImGui::Checkbox("DEMO?", &demo);
+    char buffer[1024] = "###";
+    //ImGui::InputTextWithHint("Path", "C:/path_to_file.extension", buffer, 1024);
+    if(ImGui::InputText("Path", buffer, 1024, ImGuiInputTextFlags_EnterReturnsTrue))
+    {
+        std::cout << "New path entered\n";
+        PDFREAD::RequestPath(buffer);
+        PDFREAD::Initialize();
+    }
+    
     
     ImGui::End();
     
@@ -70,9 +79,6 @@ void render_()
 
 int main()
 {
-
-    PDFREAD::Initialize();
-
     glfwInit();
     GLFWwindow* window = glfwCreateWindow(win_width, win_height, "ICVS", nullptr, nullptr);
     glfwMakeContextCurrent(window);
