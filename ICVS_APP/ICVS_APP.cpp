@@ -71,7 +71,7 @@ void render_()
 int main()
 {
 
-    PDFREAD::ShutDown();
+    PDFREAD::Initialize();
 
     glfwInit();
     GLFWwindow* window = glfwCreateWindow(win_width, win_height, "ICVS", nullptr, nullptr);
