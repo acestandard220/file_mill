@@ -7,6 +7,14 @@
 #include <sstream>
 #include <set>
 
+#ifdef PDFREAD_EXPORTS
+    #define ICVS_DLL __declspec(dllexport)
+#else
+    #define ICVS_DLL __declspec(dllimport)
+#endif
+
+
+
 namespace PDFREAD
 {
     // Don't touch
@@ -194,6 +202,11 @@ namespace PDFREAD
         page_collection* pages = nullptr;
     };
 
-    void Initialize();
-    void ShutDown();
+    
+    extern "C" ICVS_DLL void Initialize();
+    extern "C" ICVS_DLL void ShutDown();
+
+
+    extern "C" ICVS_DLL void TestFunction();
+    
 }
