@@ -12,6 +12,8 @@
 int win_width = 1280;
 int win_height = 1024;
 
+bool show_ = true;
+
 void render_()
 {
     static bool dockspaceOpen = true;
@@ -71,6 +73,8 @@ void render_()
     
     ImGui::End();
     ImGui::PopStyleVar();
+
+    ImGui::ShowDemoWindow(&show_);
     
     
     ImGui::End(); // End DockSpace
