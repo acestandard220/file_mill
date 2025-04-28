@@ -635,13 +635,15 @@ namespace PDFREAD {
         read_page_data(file);
     }
 
+    void ShutDown()
+    {
+        std::cout << "Shutdown function has beend called\n";
+    }
+
     void TestFunction()
     {
         std::cout << "Hello World\n";
     }
 
-    void Shutdonw()
-    {
-        // Empty function
-    }
+ 
 }
