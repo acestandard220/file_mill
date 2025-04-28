@@ -51,17 +51,16 @@ void render_()
     
     }
     
-    ImGui::Begin("ENGINE");
     bool demo = true;
-    ImGui::Text("%s", "This is a test window");
-    
-    ImGui::Checkbox("DEMO?", &demo);
-    char buffer[1024] = "###";
-    //ImGui::InputTextWithHint("Path", "C:/path_to_file.extension", buffer, 1024);
-    if(ImGui::InputText("Path", buffer, 1024, ImGuiInputTextFlags_EnterReturnsTrue))
+    ImGui::Begin("Inspector");
+    std::string file_name_buffer = "No file loaded.";
+    ImGui::Text("%s", file_name_buffer.c_str());
+   
+    char file_path_buffer[256] = "samplepdf.pdf";
+
+    if(ImGui::InputText("Path", file_path_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue))
     {
-        std::cout << "New path entered\n";
-        PDFREAD::RequestPath(buffer);
+        PDFREAD::RequestPath(file_path_buffer);
         PDFREAD::Initialize();
     }
     
