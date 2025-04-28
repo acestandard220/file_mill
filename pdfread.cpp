@@ -612,7 +612,7 @@ namespace PDFREAD {
     void Initialize()
     {
 
-        std::ifstream file("samplepdf.pdf", std::ios::binary);
+        std::ifstream file("assets/samplepdf.pdf", std::ios::binary);
         if (!file.is_open())
         {
             std::cout << "Could not open file...\n";
@@ -633,11 +633,6 @@ namespace PDFREAD {
         read_root_obj(file);
         read_page_collector(file);
         read_page_data(file);
-    }
-
-    void TestFunction()
-    {
-        std::cout << "Hello World\n";
     }
 
     void Shutdonw()
