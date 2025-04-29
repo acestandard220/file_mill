@@ -14,6 +14,12 @@ int win_height = 1024;
 
 bool show_ = true;
 
+//TODO: Add JSON data reading
+//TODO: Read these values from file
+
+char file_path_buffer[256] = "samplepdf.pdf";
+std::string file_name_buffer = "No file loaded.";
+
 void render_()
 {
     static bool dockspaceOpen = true;
@@ -53,15 +59,17 @@ void render_()
     
     bool demo = true;
     ImGui::Begin("Inspector");
-    std::string file_name_buffer = "No file loaded.";
     ImGui::Text("%s", file_name_buffer.c_str());
-   
-    char file_path_buffer[256] = "samplepdf.pdf";
+    
 
-    if(ImGui::InputText("Path", file_path_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue))
+    if(ImGui::InputText("Path", file_path_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Open", ImVec2(440, 20)))
     {
         PDFREAD::RequestPath(file_path_buffer);
         PDFREAD::Initialize();
+
+        std::string file_p = file_path_buffer;
+        int index = file_p.find(".");
+        file_name_buffer = "FILE::: " + file_p.substr(0, index);
     }
     
     
