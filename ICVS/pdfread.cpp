@@ -19,6 +19,8 @@ namespace PDFREAD {
     std::unordered_map<std::string, encoding> encoding_map{ {"/WinAnsiEncoding",WINANSIENCODING} };
     std::unordered_map<std::string, sub_type_index> sub_type_map{ {"/Type1",TYPE1},{"/Type2",TYPE2} };
 
+    std::array<std::string, 5> text_block_markers{ "Tf","Tm","Tj" };
+
     filedata* data;
 
     int get_length_to(std::string& line, int start, char stop = ' ')
@@ -179,7 +181,7 @@ namespace PDFREAD {
         return r;
     }
 
-    std::vector<std::string> get_array_values_s(std::string& line, int start, char delimiter = ']')
+    std::vector<std::string> get_array_values_s(std::string& line, int start, char delimiter = ']',char ele_del = ' ')
     {
         std::vector<std::string> r;
         int obj_start = start + 1;
@@ -189,7 +191,7 @@ namespace PDFREAD {
         std::string value;
         std::stringstream stream(linear_data);
 
-        while (std::getline(stream, value, ' '))
+        while (std::getline(stream, value, ele_del))
         {
             r.push_back(value);
         }
@@ -312,7 +314,7 @@ namespace PDFREAD {
         }
     }
 
-    void read_data_block(std::ifstream& file,std::string& block, int start, const std::string& delimiter)
+    void read_data_block(std::istream& file,std::string& block, int start, const std::string& delimiter)
     {
         file.clear();
         file.seekg(start, std::ios::beg);
@@ -326,7 +328,58 @@ namespace PDFREAD {
         }
     }
 
+   /* void read_data_block(std::string& line, std::string& block, int start, const std::string& delimiter)
+    {
+
+    }*/
+
+    _tm* get_tm_data(std::string& line)
+    {
+        _tm* __tm = new _tm;
+        std::array<int32_t,6> values;
+        std::string x;
+        std::stringstream stream(line);
+        int i = 0;
+        while (std::getline(stream, x, ' '))
+        {
+            values[i++] = std::stoi(x);
+        }
+        __tm->a = values[0];
+        __tm->b = values[1];
+        __tm->c = values[2];
+        __tm->d = values[3];
+        __tm->e = values[4];
+        __tm->f = values[5];
+        return __tm;
+    }
+
+    _tf* get_tf_data(std::string& line)
+    {
+        _tf* __tf = new _tf;
+        std::vector<std::string> values;
+
+        std::string x;
+        std::stringstream stream(line.substr(1));
+
+        while (std::getline(stream, x, ' '))
+        {
+            values.push_back(x);
+        }
+        __tf->tag = values[0];
+        __tf->size = std::stoi(values[1]);
+        return __tf;
+    }
+
+    _tj* get_tj_data(std::string& line)
+    {
+        _tj* __tj = new _tj;
+
+        __tj->text = get_array_values_s(line, 0, ')', '\n')[0];
+        return __tj;
+    }
+
     //TODO:Eliminate most of the hard coded string values with map functionalities...
+    //TODO:This function needs heavy refactoring...
     void read_content_data(std::ifstream& file,const std::set<uint32_t>& contents)
     {
         for(auto index : contents)
@@ -349,7 +402,88 @@ namespace PDFREAD {
             start = has_key(content_block, "BT");
             if (start)
             {
+                //Extract Begin - End Text section
+                std::string bt_block;
+                std::string _line;
+                std::stringstream stream(content_block.substr(start));
+                while (std::getline(stream, _line))
+                {
+                    bt_block += _line;
+                    if (_line.find("ET") != std::string::npos) { break; }
+                }
                 
+                //Get multiple text blocks if any...
+                std::set<size_t>positions; positions.insert(0);
+                size_t pos = bt_block.find("Tj", 0);
+                while (pos != std::string::npos)
+                {
+                    positions.insert(pos);
+                    pos = bt_block.find("Tj", pos + 2);
+                }
+
+                std::vector<std::string> _text_blocks;
+                for (auto it = positions.begin(); it!=positions.end(); ++it)
+                {
+                    auto it_next = std::next(it);
+                    if (it_next == positions.end()) { break; }
+                    std::string x = bt_block.substr(*it,*it_next + 2);
+                    _text_blocks.push_back(x);
+                }              
+
+                
+                //Extracting individual textmarker positions
+
+                std::unordered_map<std::string, size_t> marker_positions_map;
+                std::set<size_t> marker_positions; marker_positions.insert(0);
+                for(auto& text_block:_text_blocks)
+                {
+                    TextBlock txb;
+                    int marker_start = has_key(text_block, "Tf");
+                    if (marker_start)
+                    {
+                        marker_positions.insert(marker_start);
+                        marker_positions_map["Tf"] = marker_start;
+                    }
+
+                    marker_start = has_key(text_block, "Tm");
+                    if (marker_start)
+                    {
+                        marker_positions.insert(marker_start);
+                        marker_positions_map["Tm"] = marker_start;
+                    }
+
+                    marker_start = has_key(text_block, "Tj");
+                    if (marker_start)
+                    {
+                        marker_positions.insert(marker_start);
+                        marker_positions_map["Tj"] = marker_start;
+                    }
+
+                    //Get Tm start and end
+                    auto it = marker_positions.find(marker_positions_map["Tm"]);
+                    auto T_begin = *std::prev(it);
+                    T_begin = T_begin == 0 ? 0 : T_begin+1;
+
+                    std::string t_string_data = text_block.substr(T_begin, *it - T_begin-2);
+                    txb.Tm = get_tm_data(t_string_data);
+
+                    it = marker_positions.find(marker_positions_map["Tf"]);
+                    T_begin = *std::prev(it);
+                    T_begin = T_begin == 0 ? 0 : T_begin + 2;
+
+                    t_string_data = text_block.substr(T_begin, *it - T_begin - 2);
+                    txb.Tf = get_tf_data(t_string_data);
+
+                    it = marker_positions.find(marker_positions_map["Tj"]);
+                    T_begin = *std::prev(it);
+                    T_begin = T_begin == 0 ? 0 : T_begin + 2;
+                    t_string_data = text_block.substr(T_begin - 1, *it - T_begin - 2);
+
+                    txb.Tj = get_tj_data(t_string_data);
+
+                    con.BT_ETs.push_back(txb);
+                }
+
             }
         }
     }
@@ -634,6 +768,8 @@ namespace PDFREAD {
         read_root_obj(file);
         read_page_collector(file);
         read_page_data(file);
+
+        
     }
 
     void ShutDown()
