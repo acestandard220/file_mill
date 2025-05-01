@@ -72,6 +72,10 @@ void render_()
         file_name_buffer = "FILE::: " + file_p.substr(0, index);
     }
     
+    if (ImGui::Button("WRITE_TEST", ImVec2(440, 20)))
+    {
+        PDFREAD::WriteToFile();
+    }
     
     ImGui::End();
     
@@ -107,6 +111,7 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
 
     ImGui_ImplOpenGL3_Init("#version 130");
+
 
     bool show_demo_window = false;
     while (!glfwWindowShouldClose(window))
