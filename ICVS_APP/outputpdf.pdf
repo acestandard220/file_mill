@@ -1,39 +1,87 @@
-%PDF-1.412 0 obj
+%PDF-1.7
+1 0 obj
 <<
   /Type /Catalog
-  /Pages 10 0 R 
->>
-endobj
-10 0 obj
-<<
-  /Type /Pages
-  /Kids [2 0 R ]
-  /Count 1
+  /Pages 2 0 R 
 >>
 endobj
 2 0 obj
 <<
+  /Type /Pages
+  /Kids [3 0 R 7 0 R 10 0 R 11 0 R 12 0 R 13 0 R 14 0 R ]
+  /Count 7
+>>
+endobj
+11 0 obj
+<<
   /Type /Page
-  /MediaBox [0 0 612 792 ]
-  /Contents 9 0 R 
+  /MediaBox [0 0 595 841 ]
   /Resources <<
-    /Font <<
-      /F4 4 0 R 
-      /F5 5 0 R 
-      /F6 6 0 R 
-      /F7 7 0 R 
-      /F8 8 0 R 
-    >>
-    /ProcSet [/PDF /Text /ImageB /ImageC /ImageI ]
+    /ProcSet [/PDF /Text ]
   >>
 >>
 endobj
-4 0 obj
+3 0 obj
 <<
-  /Type /Font
-  /SubType /Type1
-  /BaseFont /Helvetica
-  /Encoding /MacExpertEncoding
+  /Type /Page
+  /MediaBox [0 0 400 900 ]
+  /Contents 4 0 R 
+  /Resources <<
+    /Font <<
+      /F1 6 0 R 
+      /F2 5 0 R 
+    >>
+    /ProcSet [/PDF /Text ]
+  >>
+>>
+endobj
+7 0 obj
+<<
+  /Type /Page
+  /MediaBox [0 0 900 900 ]
+  /Contents 9 0 R 
+  /Resources <<
+    /Font <<
+      /F3 8 0 R 
+    >>
+    /ProcSet [/PDF /Text ]
+  >>
+>>
+endobj
+10 0 obj
+<<
+  /Type /Page
+  /MediaBox [0 0 595 841 ]
+  /Resources <<
+    /ProcSet [/PDF /Text ]
+  >>
+>>
+endobj
+12 0 obj
+<<
+  /Type /Page
+  /MediaBox [0 0 595 841 ]
+  /Resources <<
+    /ProcSet [/PDF /Text ]
+  >>
+>>
+endobj
+13 0 obj
+<<
+  /Type /Page
+  /MediaBox [0 0 595 841 ]
+  /Resources <<
+    /ProcSet [/PDF /Text ]
+  >>
+>>
+endobj
+14 0 obj
+<<
+  /Type /Page
+  /MediaBox [0 0 595 841 ]
+  /Resources <<
+    /ProcSet [/PDF /Text ]
+  >>
 >>
 endobj
 5 0 obj
@@ -41,80 +89,71 @@ endobj
   /Type /Font
   /SubType /Type1
   /BaseFont /Helvetica
-  /Encoding /MacExpertEncoding
+  /Encoding /WinAnsiEncoding
 >>
 endobj
 6 0 obj
 <<
   /Type /Font
   /SubType /Type1
-  /BaseFont /Helvetica
-  /Encoding /MacExpertEncoding
->>
-endobj
-7 0 obj
-<<
-  /Type /Font
-  /SubType /Type1
-  /BaseFont /Helvetica
-  /Encoding /MacExpertEncoding
+  /BaseFont /ZapfDingbats
+  /Encoding /WinAnsiEncoding
 >>
 endobj
 8 0 obj
 <<
   /Type /Font
   /SubType /Type1
-  /BaseFont /Helvetica
-  /Encoding /MacExpertEncoding
+  /BaseFont /Courier
+  /Encoding /WinAnsiEncoding
 >>
+endobj
+4 0 obj
+<<
+  /Length 100
+>>
+stream
+BT
+/F1 12 Tf
+1 0 0 1 65 700 Tm
+(Click the button below to open the executable or open the attachment manually.)Tj
+ET
+endstream
 endobj
 9 0 obj
 <<
-  /Length 2499
+  /Length 53
 >>
-/FontDescriptorstream
+stream
+BT
+/F3 24 Tf
+1 0 0 1 50 50 Tm
+(FFFF is new page)Tj
+ET
 endstream
 endobj
 xref
-0 33
+0 15
 0000000000 65535 f
-0000000000 00000 f
-0000000129 00000 n
-0000000000 00000 f
-0000000387 00000 n
-0000000494 00000 n
-0000000601 00000 n
-0000000708 00000 n
-0000000815 00000 n
-0000000922 00000 n
-0000000064 00000 n
-0000000000 00000 f
-0000000008 00000 n
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
-0000000000 00000 f
+0000000009 00000 n
+0000000063 00000 n
+0000000279 00000 n
+0000001388 00000 n
+0000001072 00000 n
+0000001177 00000 n
+0000000462 00000 n
+0000001285 00000 n
+0000001557 00000 n
+0000000628 00000 n
+0000000168 00000 n
+0000000739 00000 n
+0000000850 00000 n
+0000000961 00000 n
 trailer
 <<
-  /Root 12 0 R 
-  /Size 33
+  /Root 1 0 R 
+  /Size 15
 >>
 startxref
-990
+1662
 %%EOF

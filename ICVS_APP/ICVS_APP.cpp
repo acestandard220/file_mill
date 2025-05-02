@@ -75,8 +75,9 @@ void render_()
 
     if (ImGui::Button("ChangeFont", ImVec2(440, 20)))
     {
-        PDFREAD::ChangeFont(1, 1, PDFREAD::HELVETICA);
-        PDFREAD::AddFont(1, PDFREAD::TIMES_ROMAN_BOLDITALIC);
+        PDFREAD::AddPage();
+        /*PDFREAD::ChangeFont(1, 1, PDFREAD::HELVETICA);
+        PDFREAD::AddFont(1, PDFREAD::TIMES_ROMAN_BOLDITALIC);*/
     }
     
     if (ImGui::Button("WRITE_TEST", ImVec2(440, 20)))

@@ -51,9 +51,8 @@ namespace PDFREAD
         ENDOBJ,
         FONT,
         CONTENT,
-        STREAM,
         FONT_DESCRIPTOR,
-
+        STREAM,
         _type_index_last // Make sure it's always last
         // NOTE: Don't forget to update array size after additions...
     };
@@ -86,6 +85,18 @@ namespace PDFREAD
         KL_TRAILER,
         _key_line_last
     };
+
+    enum procset_index
+    {
+        PROCSET_PDF,
+        PROCSET_TEXT,
+        PROCSET_IMAGE_A,
+        PROCSET_IMAGE_B,
+        PROCSET_IMAGE_C,
+        PROCSET_IMAGE_I,
+        _procset_index_last
+    };
+
     enum label_index
     {
         LABEL_F,
@@ -277,6 +288,7 @@ namespace PDFREAD
         std::shared_ptr<write_filedata> cur_file_write;
         std::shared_ptr<fix_filedata> fix_data;
     };
+
     struct page_collection
     {
         uint32_t id;
@@ -305,7 +317,7 @@ namespace PDFREAD
         Page() = default;
 
         Page(uint32_t _id)
-            :Object(id, PAGE)
+            :Object(_id, PAGE)
         {
         }
 
@@ -313,7 +325,7 @@ namespace PDFREAD
         media_box media_box;
         std::vector<uint32_t> rContents;// reference to its content objects;
         std::unordered_map<int, uint32_t> rFonts;
-        std::vector<std::string> cProcSet;
+        std::vector<int> cProcSet;
 
         int highest_font_tag = 1;
     };
@@ -407,8 +419,15 @@ namespace PDFREAD
     extern "C" ICVS_DLL void ChangeFont(int page_num, int tag,base_font font);
     extern "C" ICVS_DLL void AddFont(int page_num, base_font font, sub_type_index sub_type = TYPE1, encoding = WINANSIENCODING);
 
+    extern "C" int GetNumberOfPages();
+    extern "C" ICVS_DLL uint32_t GetPageObjNumber(int page_number);
     extern "C" ICVS_DLL void WriteToFile();
 
 
 
 }
+
+//ERRORS in pdf
+//When the pdf page has no content references.
+// 
+//....

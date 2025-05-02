@@ -16,7 +16,7 @@ namespace PDFREAD {
         "endobj",
         "/Font",
         "/Contents",
-        "/FontDescriptor"
+        "/FontDescriptor",
         "stream" 
     };
     std::array<const std::string, _key_index_last> key_string{
@@ -72,7 +72,25 @@ namespace PDFREAD {
         "/MacRomanEncoding",
         "/WinAnsiEncoding"
     };
+
+    std::array<std::string, _procset_index_last> procset_string{
+       "/PDF",
+       "/Text",
+       "/ImageA",
+       "/ImageB",
+       "/ImageC",
+       "/ImageI"
+    };
     
+    std::unordered_map<std::string, procset_index>procset_map{
+        {"/PDF",   PROCSET_PDF},
+        {"/Text",  PROCSET_TEXT},
+        {"/ImageA",PROCSET_IMAGE_A},
+        {"/ImageB",PROCSET_IMAGE_B},
+        {"/ImageC",PROCSET_IMAGE_C},
+        {"/ImageI",PROCSET_IMAGE_I},
+    };
+
     std::unordered_map<std::string, base_font> base_font_map{
         {"/Courier", COURIER},
         {"/Courier-Bold", COURIER_BOLD},
@@ -106,6 +124,8 @@ namespace PDFREAD {
     };
 
     std::array<std::string, 5> text_block_markers{ "Tf","Tm","Tj" };
+
+   
 
     global_file_instance global_data;
     //read_filedata* data = nullptr;
@@ -348,6 +368,17 @@ namespace PDFREAD {
             }
         }
         return r;
+    }
+
+    template <typename T>
+    std::vector<int> get_mapped_values(std::vector<std::string> list, std::unordered_map<std::string, T> map)
+    {
+        std::vector<int> procsets;
+        for (auto& x : list)
+        {
+            procsets.push_back(map[x]);
+        }
+        return procsets;
     }
 
     int has_key(std::string& line, const std::string& key)
@@ -781,7 +812,7 @@ namespace PDFREAD {
             file.seekg(global_data.cur_file_read->obj_offsets[page_obj_index][BYTE_OFFSET], std::ios::beg);
 
             global_data.cur_file_read->cPage[page_obj_index] = Page(page_obj_index);
-            global_data.cur_file_read->cPage[page_obj_index].id = page_obj_index;
+            //global_data.cur_file_read->cPage[page_obj_index].id = page_obj_index;
 
             while (std::getline(file, line))
             {
@@ -861,7 +892,7 @@ namespace PDFREAD {
                     len = get_length_to(resource_block, _start, ']');
                     res_line = resource_block.substr(_start, len);
 
-                    global_data.cur_file_read->cPage[page_obj_index].cProcSet = get_array_values_s(res_line, 0);
+                    global_data.cur_file_read->cPage[page_obj_index].cProcSet = get_mapped_values<procset_index>(get_array_values_s(res_line, 0),procset_map);
                 }
             }
             global_data.cur_file_read->read_objects[page_obj_index] = true;
@@ -1169,7 +1200,19 @@ namespace PDFREAD {
 
     void AddPage()
     {
-        
+        int new_obj_index = global_data.cur_file_read->num_obj++;
+        global_data.cur_file_read->cPage[new_obj_index] = Page(new_obj_index);
+       
+        int new_tot_pages = ++global_data.cur_file_read->root->pages->nPages;
+        global_data.cur_file_read->root->pages->mPages.push_back(new_obj_index);
+       
+        global_data.cur_file_read->cPage[new_obj_index].media_box = media_box(0, 0, 595.32, 841.92);
+
+        global_data.cur_file_read->cPage[new_obj_index].cProcSet.push_back(PROCSET_PDF);
+        global_data.cur_file_read->cPage[new_obj_index].cProcSet.push_back(PROCSET_TEXT);
+    
+        global_data.cur_file_read->obj_offsets.resize(global_data.cur_file_read->num_obj);
+        global_data.cur_file_read->obj_offsets[new_obj_index] = { 0,0,1 };
     }
 
     void ChangeFont(int page_num, int tag, base_font font)
@@ -1202,6 +1245,16 @@ namespace PDFREAD {
         global_data.cur_file_read->version = version_string[version];
     }
 
+
+    int GetNumberOfPages()
+    {
+        return global_data.cur_file_read->root->pages->nPages;
+    }
+
+    uint32_t GetPageObjNumber(int page_number)
+    {
+        return global_data.cur_file_read->root->pages->get_obj_index(page_number);
+    }
 
     //WRITE TO................................................................
 
@@ -1328,6 +1381,8 @@ namespace PDFREAD {
         return out;
     }
 
+
+
     void create_custom_line(std::string& out, const std::string& value, int indent = 0)
     {
         for (int i = 0; i < indent; i++) { out += " "; }
@@ -1413,12 +1468,15 @@ namespace PDFREAD {
             create_obj_type_line(line, type_index::PAGE);
 
             create_key_array_line(line, key_index::KEY_MEDIABOX, create_media_box_value_string(page_data.media_box));
-            create_key_indirect_obj_value_ref_line(line, KEY_CONTENTS, create_indirect_obj_value_array_string(page_data.rContents));
-
+            if(!page_data.rContents.empty())
+            {
+                create_key_indirect_obj_value_ref_line(line, KEY_CONTENTS, create_indirect_obj_value_array_string(page_data.rContents));
+            }
             //Resources
             create_dict_key_opening_line(line, KEY_RESOURCES);
             {
                 //Font 
+                if(!page_data.rFonts.empty())
                 {
                     create_dict_key_opening_line(line, KEY_FONT);
 
@@ -1434,7 +1492,12 @@ namespace PDFREAD {
 
                 //ProcSet 
                 {
-                    create_key_array_line(line, KEY_PROCSET, create_value_array_string<std::string>(page_data.cProcSet));
+                    std::vector<std::string>cv;
+                    for (auto z : page_data.cProcSet)
+                    {
+                        cv.push_back(procset_string[z]);
+                    }
+                    create_key_array_line(line, KEY_PROCSET, create_value_array_string<std::string>(cv));
                 }
 
             }
