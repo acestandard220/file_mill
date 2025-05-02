@@ -1,4 +1,4 @@
-12 0 obj
+%PDF-1.412 0 obj
 <<
   /Type /Catalog
   /Pages 10 0 R 
@@ -31,65 +31,65 @@ endobj
 4 0 obj
 <<
   /Type /Font
-  /SubType /Type0
+  /SubType /Type1
   /BaseFont /Helvetica
-  /Encoding /WinAnsiEncoding
+  /Encoding /MacExpertEncoding
 >>
 endobj
 5 0 obj
 <<
   /Type /Font
-  /SubType /Type0
+  /SubType /Type1
   /BaseFont /Helvetica
-  /Encoding /WinAnsiEncoding
+  /Encoding /MacExpertEncoding
 >>
 endobj
 6 0 obj
 <<
   /Type /Font
-  /SubType /Type0
+  /SubType /Type1
   /BaseFont /Helvetica
-  /Encoding /WinAnsiEncoding
+  /Encoding /MacExpertEncoding
 >>
 endobj
 7 0 obj
 <<
   /Type /Font
-  /SubType /Type0
+  /SubType /Type1
   /BaseFont /Helvetica
-  /Encoding /WinAnsiEncoding
+  /Encoding /MacExpertEncoding
 >>
 endobj
 8 0 obj
 <<
   /Type /Font
-  /SubType /Type0
+  /SubType /Type1
   /BaseFont /Helvetica
-  /Encoding /WinAnsiEncoding
+  /Encoding /MacExpertEncoding
 >>
 endobj
 9 0 obj
 <<
   /Length 2499
 >>
-stream
+/FontDescriptorstream
 endstream
 endobj
 xref
 0 33
 0000000000 65535 f
 0000000000 00000 f
-0000000121 00000 n
+0000000129 00000 n
 0000000000 00000 f
-0000000379 00000 n
-0000000484 00000 n
-0000000589 00000 n
-0000000694 00000 n
-0000000799 00000 n
-0000000904 00000 n
-0000000056 00000 n
+0000000387 00000 n
+0000000494 00000 n
+0000000601 00000 n
+0000000708 00000 n
+0000000815 00000 n
+0000000922 00000 n
+0000000064 00000 n
 0000000000 00000 f
-0000000000 00000 n
+0000000008 00000 n
 0000000000 00000 f
 0000000000 00000 f
 0000000000 00000 f
@@ -116,4 +116,5 @@ trailer
   /Size 33
 >>
 startxref
-957
+990
+%%EOF

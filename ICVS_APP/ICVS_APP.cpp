@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-#include "../ICVS/pdfread.h"
+#include "../ICVS/pdf_mill.h"
 
 int win_width = 1280;
 int win_height = 1024;
@@ -64,12 +64,19 @@ void render_()
 
     if(ImGui::InputText("Path", file_path_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Open", ImVec2(440, 20)))
     {
+        PDFREAD::ShutDown();
         PDFREAD::RequestPath(file_path_buffer);
         PDFREAD::Initialize();
 
         std::string file_p = file_path_buffer;
         int index = file_p.find(".");
         file_name_buffer = "FILE::: " + file_p.substr(0, index);
+    }
+
+    if (ImGui::Button("ChangeFont", ImVec2(440, 20)))
+    {
+        PDFREAD::ChangeFont(1, 1, PDFREAD::HELVETICA);
+        PDFREAD::AddFont(1, PDFREAD::TIMES_ROMAN_BOLDITALIC);
     }
     
     if (ImGui::Button("WRITE_TEST", ImVec2(440, 20)))
