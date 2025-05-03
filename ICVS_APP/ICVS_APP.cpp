@@ -18,7 +18,11 @@ bool show_ = true;
 //TODO: Read these values from file
 
 char file_path_buffer[256] = "samplepdf.pdf";
+char write_path[256] = "outputpdf.pdf";
 std::string file_name_buffer = "No file loaded.";
+
+int p = 5;
+const char** r{};
 
 void render_()
 {
@@ -60,28 +64,39 @@ void render_()
     bool demo = true;
     ImGui::Begin("Inspector");
     ImGui::Text("%s", file_name_buffer.c_str());
-    
-
-    if(ImGui::InputText("Path", file_path_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Open", ImVec2(440, 20)))
+    if(ImGui::InputText("Path From", file_path_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Open File", ImVec2(440, 20)))
     {
         PDFREAD::ShutDown();
-        PDFREAD::RequestPath(file_path_buffer);
+        PDFREAD::RequestReadPath(file_path_buffer);
         PDFREAD::Initialize();
 
         std::string file_p = file_path_buffer;
         int index = file_p.find(".");
         file_name_buffer = "FILE::: " + file_p.substr(0, index);
-    }
+        p = PDFREAD::GetNumberOfPages();
 
-    if (ImGui::Button("ChangeFont", ImVec2(440, 20)))
+      /*  r = PDFREAD::GetPagesNumbers();*/
+    }
+   
+    
+   /* const char* o = "PAges";
+    int cur_item = 0;
+    ImGui::ListBox(o, &cur_item, r,p );*/
+   
+    if (ImGui::Button("Add Page", ImVec2(440, 20)))
     {
         PDFREAD::AddPage();
         /*PDFREAD::ChangeFont(1, 1, PDFREAD::HELVETICA);
         PDFREAD::AddFont(1, PDFREAD::TIMES_ROMAN_BOLDITALIC);*/
     }
+
     
-    if (ImGui::Button("WRITE_TEST", ImVec2(440, 20)))
+   
+
+    
+    if (ImGui::InputText("Path To", write_path, 256, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Write To File", ImVec2(440, 20)))
     {
+        PDFREAD::RequestWritePath(write_path);
         PDFREAD::WriteToFile();
     }
     
@@ -91,6 +106,11 @@ void render_()
     ImGui::Begin("ScenePort");
     
     ImGui::End();
+
+    ImGui::Begin("FILE DATA");
+
+    ImGui::End();
+
     ImGui::PopStyleVar();
 
     ImGui::ShowDemoWindow(&show_);

@@ -277,6 +277,8 @@ namespace PDFREAD
 
         std::vector<std::array<int, _xref_values_last>> obj_offsets;
         std::array<int, _xref_values_last> __unique_onj_zero__;
+
+        std::string write_path;
     };
 
     struct global_file_instance
@@ -409,7 +411,7 @@ namespace PDFREAD
 
     extern "C" ICVS_DLL void Initialize();
     extern "C" ICVS_DLL void ShutDown();
-    extern "C" ICVS_DLL void RequestPath(const char* path);
+    extern "C" ICVS_DLL void RequestReadPath(const char* path);
     
     extern "C" void FixXref(std::string& path);
     
@@ -419,10 +421,13 @@ namespace PDFREAD
     extern "C" ICVS_DLL void ChangeFont(int page_num, int tag,base_font font);
     extern "C" ICVS_DLL void AddFont(int page_num, base_font font, sub_type_index sub_type = TYPE1, encoding = WINANSIENCODING);
 
-    extern "C" int GetNumberOfPages();
+    extern "C" ICVS_DLL int GetNumberOfPages();
     extern "C" ICVS_DLL uint32_t GetPageObjNumber(int page_number);
-    extern "C" ICVS_DLL void WriteToFile();
+    extern "C" ICVS_DLL const char** GetPagesNumbers();
+    
 
+    extern "C" ICVS_DLL void WriteToFile();
+    extern "C" ICVS_DLL void RequestWritePath(std::string path);
 
 
 }

@@ -129,7 +129,7 @@ namespace PDFREAD {
 
     global_file_instance global_data;
     //read_filedata* data = nullptr;
-    write_filedata* write_data = nullptr;
+    //write_filedata* write_data = nullptr;
 
     int get_length_to(std::string& line, int start, char stop = ' ')
     {
@@ -1141,15 +1141,15 @@ namespace PDFREAD {
 
     void Initialize()
     {
+
+        global_data.fix_data = std::make_shared<fix_filedata>();
+
         std::ifstream file(current_path, std::ios::binary);
         if (!file.is_open())
         {
             std::cout << "Could not open file...\n";
         }
         
-        global_data.file_reads.emplace_back(std::make_shared<read_filedata>());
-        global_data.cur_file_read = global_data.file_reads[0];
-        global_data.fix_data = std::make_shared<fix_filedata>();
 
         std::getline(file, global_data.cur_file_read->version);
         file.seekg(0, std::ios::end);
@@ -1173,8 +1173,11 @@ namespace PDFREAD {
 
     }
 
-    void RequestPath(const char* path)
+    void RequestReadPath(const char* path)
     {
+        global_data.file_reads.emplace_back(std::make_shared<read_filedata>());
+        global_data.cur_file_read = global_data.file_reads[0];
+
         current_path = path;
     }
     
@@ -1254,6 +1257,27 @@ namespace PDFREAD {
     uint32_t GetPageObjNumber(int page_number)
     {
         return global_data.cur_file_read->root->pages->get_obj_index(page_number);
+    }
+    const char** GetPagesNumbers()
+    {
+        std::vector<const char*> r;
+        for (int i = 0; i < global_data.cur_file_read->root->pages->nPages; i++)
+        {
+            r.push_back(std::to_string(i).c_str());
+
+        }
+        return r.data();
+    }
+
+    const char** re()
+    {
+        const char** r = {};
+        for (int i = 0; i < global_data.cur_file_read->root->pages->nPages; i++)
+        {
+            r[i] = std::to_string(i).c_str();
+
+        }
+        return r;
     }
 
     //WRITE TO................................................................
@@ -1417,9 +1441,9 @@ namespace PDFREAD {
     {
         int offset = file.tellp();
 
-        write_data->root_id = global_data.cur_file_read->root->id;
-        write_data->obj_offsets[global_data.cur_file_read->root->id] = { offset,global_data.cur_file_read->obj_offsets[global_data.cur_file_read->root->id][UID],global_data.cur_file_read->obj_offsets[global_data.cur_file_read->root->id][FLAG] };
-        write_data->obj_offsets[0] = { 0,65535,0 };
+        global_data.cur_file_write->root_id = global_data.cur_file_read->root->id;
+        global_data.cur_file_write->obj_offsets[global_data.cur_file_read->root->id] = { offset,global_data.cur_file_read->obj_offsets[global_data.cur_file_read->root->id][UID],global_data.cur_file_read->obj_offsets[global_data.cur_file_read->root->id][FLAG] };
+        global_data.cur_file_write->obj_offsets[0] = { 0,65535,0 };
 
 
         std::string line;
@@ -1438,7 +1462,7 @@ namespace PDFREAD {
     {
         int offset = file.tellp();
 
-        write_data->obj_offsets[global_data.cur_file_read->root->pages->id] = { offset,global_data.cur_file_read->obj_offsets[global_data.cur_file_read->root->pages->id][UID],global_data.cur_file_read->obj_offsets[global_data.cur_file_read->root->pages->id][FLAG] };
+        global_data.cur_file_write->obj_offsets[global_data.cur_file_read->root->pages->id] = { offset,global_data.cur_file_read->obj_offsets[global_data.cur_file_read->root->pages->id][UID],global_data.cur_file_read->obj_offsets[global_data.cur_file_read->root->pages->id][FLAG] };
 
         std::string line;
         create_obj_start_line(line, global_data.cur_file_read->root->pages->id);
@@ -1461,7 +1485,7 @@ namespace PDFREAD {
         {
             offset = file.tellp();
             auto& page_data = x.second;
-            write_data->obj_offsets[page_data.id] = { offset,global_data.cur_file_read->obj_offsets[page_data.id][UID],
+            global_data.cur_file_write->obj_offsets[page_data.id] = { offset,global_data.cur_file_read->obj_offsets[page_data.id][UID],
                                                              global_data.cur_file_read->obj_offsets[page_data.id][FLAG] };
             std::string line;
             create_obj_start_line(line, page_data.id);
@@ -1516,7 +1540,7 @@ namespace PDFREAD {
             offset = file.tellp();
             auto& obj_index = x.first;
             auto& font_data = x.second;
-            write_data->obj_offsets[obj_index] = { offset,global_data.cur_file_read->obj_offsets[obj_index][UID],
+            global_data.cur_file_write->obj_offsets[obj_index] = { offset,global_data.cur_file_read->obj_offsets[obj_index][UID],
                                                              global_data.cur_file_read->obj_offsets[obj_index][FLAG] };
             std::string line;
 
@@ -1540,7 +1564,7 @@ namespace PDFREAD {
         {
             offset = file.tellp();
             auto& content_data = x.second;
-            write_data->obj_offsets[content_data.id] = { offset,global_data.cur_file_read->obj_offsets[content_data.id][UID],
+            global_data.cur_file_write->obj_offsets[content_data.id] = { offset,global_data.cur_file_read->obj_offsets[content_data.id][UID],
                                                                 global_data.cur_file_read->obj_offsets[content_data.id][FLAG] };
             std::string line;
             create_obj_start_line(line, content_data.id);
@@ -1579,7 +1603,7 @@ namespace PDFREAD {
 
         //create_custom_line(line, "0000000000 65535 f ");
 
-        for (auto x : write_data->obj_offsets)
+        for (auto x : global_data.cur_file_write->obj_offsets)
         {
 
             std::string _byteoffset = "0000000000 ";
@@ -1620,15 +1644,14 @@ namespace PDFREAD {
 
     void WriteToFile()
     {
-        std::ofstream file("outputpdf.pdf", std::ios::binary);
+        std::ofstream file(global_data.cur_file_write->write_path, std::ios::binary);
         if (!file.is_open())
         {
             std::cout << "Could not write to file...\n";
             return;
         }
-        write_data = new write_filedata;
 
-        write_data->obj_offsets.resize(global_data.cur_file_read->num_obj);
+        global_data.cur_file_write->obj_offsets.resize(global_data.cur_file_read->num_obj);
         write_line(file, global_data.cur_file_read->version);
         write_root_obj(file);
         write_page_collector(file);
@@ -1637,8 +1660,17 @@ namespace PDFREAD {
         write_content_obj(file);
         write_xref_table(file);
         write_line(file, global_data.cur_file_read->eof);
+
+        file.close();
     }
 
+    void RequestWritePath(std::string path)
+    {
+        global_data.file_writes.emplace_back(std::make_shared<write_filedata>());
+        global_data.cur_file_write = global_data.file_writes[0];
+
+        global_data.cur_file_write->write_path = path;
+    }
 
 }
 

@@ -1,5 +1,4 @@
-%PDF-1.7
-1 0 obj
+%PDF-1.71 0 obj
 <<
   /Type /Catalog
   /Pages 2 0 R 
@@ -8,17 +7,8 @@ endobj
 2 0 obj
 <<
   /Type /Pages
-  /Kids [3 0 R 7 0 R 10 0 R 11 0 R 12 0 R 13 0 R 14 0 R ]
-  /Count 7
->>
-endobj
-11 0 obj
-<<
-  /Type /Page
-  /MediaBox [0 0 595 841 ]
-  /Resources <<
-    /ProcSet [/PDF /Text ]
-  >>
+  /Kids [3 0 R 7 0 R ]
+  /Count 2
 >>
 endobj
 3 0 obj
@@ -44,42 +34,6 @@ endobj
     /Font <<
       /F3 8 0 R 
     >>
-    /ProcSet [/PDF /Text ]
-  >>
->>
-endobj
-10 0 obj
-<<
-  /Type /Page
-  /MediaBox [0 0 595 841 ]
-  /Resources <<
-    /ProcSet [/PDF /Text ]
-  >>
->>
-endobj
-12 0 obj
-<<
-  /Type /Page
-  /MediaBox [0 0 595 841 ]
-  /Resources <<
-    /ProcSet [/PDF /Text ]
-  >>
->>
-endobj
-13 0 obj
-<<
-  /Type /Page
-  /MediaBox [0 0 595 841 ]
-  /Resources <<
-    /ProcSet [/PDF /Text ]
-  >>
->>
-endobj
-14 0 obj
-<<
-  /Type /Page
-  /MediaBox [0 0 595 841 ]
-  /Resources <<
     /ProcSet [/PDF /Text ]
   >>
 >>
@@ -133,27 +87,22 @@ ET
 endstream
 endobj
 xref
-0 15
+0 10
 0000000000 65535 f
 0000000009 00000 n
 0000000063 00000 n
-0000000279 00000 n
-0000001388 00000 n
-0000001072 00000 n
-0000001177 00000 n
-0000000462 00000 n
-0000001285 00000 n
-0000001557 00000 n
-0000000628 00000 n
-0000000168 00000 n
-0000000739 00000 n
-0000000850 00000 n
-0000000961 00000 n
+0000000133 00000 n
+0000000798 00000 n
+0000000482 00000 n
+0000000587 00000 n
+0000000316 00000 n
+0000000695 00000 n
+0000000967 00000 n
 trailer
 <<
   /Root 1 0 R 
-  /Size 15
+  /Size 10
 >>
 startxref
-1662
+1072
 %%EOF
