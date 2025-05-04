@@ -416,6 +416,7 @@ namespace PDFREAD
     extern "C" void FixXref(std::string& path);
     
     extern "C" ICVS_DLL void AddPage();
+    extern "C" ICVS_DLL  void RemovePage(int page_num);
     extern "C" ICVS_DLL void UpdateVersion(version_index version);
     
     extern "C" ICVS_DLL void ChangeFont(int page_num, int tag,base_font font);

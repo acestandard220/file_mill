@@ -78,21 +78,21 @@ void render_()
       /*  r = PDFREAD::GetPagesNumbers();*/
     }
    
-    
-   /* const char* o = "PAges";
-    int cur_item = 0;
-    ImGui::ListBox(o, &cur_item, r,p );*/
-   
     if (ImGui::Button("Add Page", ImVec2(440, 20)))
     {
         PDFREAD::AddPage();
-        /*PDFREAD::ChangeFont(1, 1, PDFREAD::HELVETICA);
-        PDFREAD::AddFont(1, PDFREAD::TIMES_ROMAN_BOLDITALIC);*/
     }
 
+    if (ImGui::Button("Remove Page", ImVec2(440, 20)))
+    {
+        PDFREAD::RemovePage(4);
+    }
     
    
-
+    if (ImGui::Button("Add Font", ImVec2(440, 20)))
+    {
+        PDFREAD::AddFont(2, PDFREAD::COURIER_BOLD);
+    }
     
     if (ImGui::InputText("Path To", write_path, 256, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Write To File", ImVec2(440, 20)))
     {
