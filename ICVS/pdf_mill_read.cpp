@@ -1,35 +1,9 @@
-#include "pdfread.h"
-#include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <ostream>
-#include <string>
+#include "includes/pdf_mill.h"
+
 int m = 9;
 
-namespace PDFREAD {
+namespace PDF_MILL {
 
-    std::array<const std::string, _type_index_last> type_string{ "/Catalog", "/Pages", "/Page", "endobj","/Font","/Contents","stream"};
-    std::array<const std::string, _key_index_last> key_string{
-        "/Count","/Contents","/Kids","/Pages",
-        "/MediaBox","/Length","/Resources","/Font",
-        "/ProcSet","/F",endline,"trailer","/Size","/Root","/BaseFont","/Encoding"};
-    std::array<const std::string, _key_line_last> key_line_string{ "stream","xref","startxref","trailer" };
-    std::array<const std::string, _resource_type_last> resource_string{ "/Font","/ProcSet" };
-    std::array<const char*, _label_index_last>label_string{ "/F" };
-    
-    std::unordered_map<char, char> pair = { {'[', ']'}, {'{', '}'}, {'(', ')'} };
-    std::array<const std::string, base_font_last> base_font_string{ "/Helvetica","/ZapfDingbats" };
-    std::array<const std::string, _sub_type_index_last> sub_type_string{"/Type0","/Type1", "/Type2"};
-    extern std::array<const std::string, base_font_last> encoding_string{ "/WinAnsiEncoding" };
-
-    std::unordered_map<std::string, base_font> base_font_map{ {"/Helvetica",HELVETICA},{"ZapfDingbats",ZAPFDINGBATS} };
-    std::unordered_map<std::string, encoding> encoding_map{ {"/WinAnsiEncoding",WINANSIENCODING} };
-    std::unordered_map<std::string, sub_type_index> sub_type_map{{"/Type0",TYPE0}, {"/Type1",TYPE1},{"/Type2",TYPE2}};
-
-    std::array<std::string, 5> text_block_markers{ "Tf","Tm","Tj" };
-
-    read_filedata* data = nullptr;
-    write_filedata* write_data = nullptr;
 
     int get_length_to(std::string& line, int start, char stop = ' ')
     {
@@ -47,7 +21,7 @@ namespace PDFREAD {
         return x;
     }
 
-    int get_length_to_not(std::string& line,char delimiter = ' ')
+    int get_length_to_not(std::string& line, char delimiter = ' ')
     {
         int index = 0;
         while (line[index] == delimiter)
@@ -70,9 +44,9 @@ namespace PDFREAD {
         bool first = true;
         while (std::getline(stream, value, 'R'))
         {
-            int index = value[0] != ' ' ? 0:1;
+            int index = value[0] != ' ' ? 0 : 1;
             int len = get_length_to(value, index);
-            std::string _v = value.substr(index, len);       
+            std::string _v = value.substr(index, len);
             try
             {
                 r.push_back(std::stoi(_v));
@@ -93,12 +67,12 @@ namespace PDFREAD {
 
     std::pair<std::string, uint32_t> get_dict_key_value_indirect_obj(std::string line, int start)
     {
-        if (line.empty() || line.length()-1 <= 1) { return std::pair<std::string, uint32_t>("",0); }
+        if (line.empty() || line.length() - 1 <= 1) { return std::pair<std::string, uint32_t>("", 0); }
         int key_len = get_length_to(line, start, ' ');
         std::string _key = line.substr(start + 1, key_len);
 
         int value_len = get_length_to(line, start + key_len + 1);
-        int _value = std::stoi(line.substr(start + key_len + 1, value_len)); //ERro found here...
+        int _value = std::stoi(line.substr(start + key_len + 1, value_len)); 
 
         return std::pair<std::string, uint32_t>(_key, _value);
     }
@@ -130,14 +104,14 @@ namespace PDFREAD {
     }
 
     void _remove_redun_spaces(std::string& line)
-    {        
+    {
         int front_c = get_length_to_not(line);
         line = line.substr(front_c);
         for (int i = 0; i < line.length();)
         {
-            if (line[i] == ' ' && line[i+1] == ' ')
+            if (line[i] == ' ' && line[i + 1] == ' ')
             {
-                line.erase(i,1);
+                line.erase(i, 1);
             }
             else if (line[i] == ' ' && line[i + 1] == '\n')
             {
@@ -157,7 +131,7 @@ namespace PDFREAD {
 
         while (start != std::string::npos) //+2->> length of literal
         {
-            line.insert(start + 2,1, ' ');
+            line.insert(start + 2, 1, ' ');
             last_find = start;
             start = line.find("<<", last_find + 2);
         }
@@ -170,9 +144,19 @@ namespace PDFREAD {
         _remove_redun_spaces(line);
     }
 
- 
+
     //Read 4 values from an array [x x x x]
-    std::vector<uint32_t> get_array_values_i(std::string& line, int start, char delimiter = ']')
+    
+
+
+   
+    /// @brief : Read values until delimiter is reached
+    /// @param line : string line that contains values
+    /// @param start : first values index
+    /// @param delimiter : delimiter of whole array in string
+    /// @param ele_del : delimiter btn each element
+    /// @return : array of extracted uint32_t values
+    std::vector<uint32_t> get_array_values_i(std::string& line, int start, char delimiter = ']',char ele_del = ' ')
     {
         //0123456789A
         //0 0 900  900
@@ -183,7 +167,7 @@ namespace PDFREAD {
 
         std::string value;
         std::stringstream stream(linear_data);
-        while (std::getline(stream, value, ' '))
+        while (std::getline(stream, value, ele_del))
         {
             try
             {
@@ -203,7 +187,7 @@ namespace PDFREAD {
         return r;
     }
 
-    std::vector<std::string> get_array_values_s(std::string& line, int start, char delimiter = ']',char ele_del = ' ')
+    std::vector<std::string> get_array_values_s(std::string& line, int start, char delimiter = ']', char ele_del = ' ')
     {
         std::vector<std::string> r;
         int obj_start = start + 1;
@@ -217,12 +201,16 @@ namespace PDFREAD {
         {
             r.push_back(value);
         }
-       
+
         return r;
     }
 
-    //todo: think about delimiter param
-    //becareful with reading array due to current delimiter might shoot your self in the leg
+ 
+    /// @brief 
+    /// @param line : string that contains possible values
+    /// @param start : values start
+    /// @param delimiter : end of values array in string  
+    /// @return : extracted uint32_t obj_indexes
     std::vector<uint32_t> get_indirect_array_obj(std::string& line, int start, char delimiter = ' ')
     {
         std::vector<uint32_t> r;
@@ -242,7 +230,7 @@ namespace PDFREAD {
             {
                 r.push_back(std::stoi(_v));
             }
-            catch(std::invalid_argument& e)
+            catch (std::invalid_argument& e)
             {
                 std::cout << "Corrupt XREF...\n";
                 return std::vector<uint32_t>();
@@ -256,6 +244,17 @@ namespace PDFREAD {
         return r;
     }
 
+    template <typename T>
+    std::vector<int> get_mapped_values(std::vector<std::string> list, std::unordered_map<std::string, T> map)
+    {
+        std::vector<int> procsets;
+        for (auto& x : list)
+        {
+            procsets.push_back(map[x]);
+        }
+        return procsets;
+    }
+
     int has_key(std::string& line, const std::string& key)
     {
         int line_index = line.find(key);
@@ -263,7 +262,8 @@ namespace PDFREAD {
         if (line.find(key) != std::string::npos)
         {
             return line_index + search_length; //true
-        } else {
+        }
+        else {
             return 0; //false
         }
     }
@@ -279,12 +279,12 @@ namespace PDFREAD {
                 return line_index + search_length; //true
             }
             else {
-                continue; 
+                continue;
             }
         }
         return 0;
     }
-   
+
     bool validate_obj_type(std::string& line, type_index type)
     {
         const std::string temp = "/Type ";
@@ -306,20 +306,149 @@ namespace PDFREAD {
         return (line.find(type_string[ENDOBJ]) != std::string::npos);
     }
 
-    //NOTE: Currently not handling any error for when font is not available in my list.
-    void read_font_obj(std::ifstream& file, std::set<uint32_t> _obj_index)
+    void read_font_file_obj(std::ifstream& file, std::set<uint32_t> _obj_index)
     {
         std::string line;
         for (auto& index : _obj_index)
         {
             file.clear();
-            file.seekg(data->obj_offsets[index][BYTE_OFFSET]);
+            file.seekg(global_data->cur_file_read->obj_offsets[index][BYTE_OFFSET]);
 
-            data->cFont[index] = Font(index);
+            while (std::getline(file, line))
+            {
+                if (end_of_obj(line)) { break; }
+
+                int start = has_key(line, "/Type ");
+                if (start)
+                {
+                    if (!validate_obj_type(line, FONT_DESCRIPTOR))
+                    {
+                        return;
+                    }
+                }
+
+                start = has_key(line, "/Length ");
+                if (start)
+                {
+                    global_data->cur_file_read->cFontFile[index].length = get_array_values_i(line, start, ' ')[0];
+                }
+                start = has_key(line, "/Length1 ");
+                if (start)
+                {
+                    global_data->cur_file_read->cFontFile[index].length1 = get_array_values_i(line, start, ' ')[0];
+                }
+
+                start = has_key(line, "stream");
+                if (start)
+                {
+                    std::string stream;
+                    while (std::getline(file, stream, '>'))
+                    {
+                        global_data->cur_file_read->cFontFile[index].stream = stream;
+                    }
+                }
+            }
+        }
+    }
+
+    void read_font_desc_obj(std::ifstream& file, std::set<uint32_t>& obj_index)
+    {
+        std::set<uint32_t> _obj_index;
+        std::string line;
+        for (auto& index : obj_index)
+        {
+            file.clear();
+            file.seekg(global_data->cur_file_read->obj_offsets[index][BYTE_OFFSET]);
+
             while (std::getline(file, line))
             {
                 if (end_of_obj(line)) { break; }
                 
+                int start = has_key(line, "/Type ");
+                if (start)
+                {
+                    if (!validate_obj_type(line, FONT_DESCRIPTOR))
+                    {
+                        return;
+                    }
+                }
+
+                start = has_key(line, "/Flag ");
+                if (start)
+                {
+                    global_data->cur_file_read->cFontDescriptors[index][flag_param] = get_array_values_i(line, start, ' ')[0];
+                }
+
+                start = has_key(line, "/FontBBox ");
+                if (start)
+                {
+                    auto g = get_array_values_i(line, start, ' ');
+                    global_data->cur_file_read->cFontBox[index] = font_box(g[0], g[1], g[2], g[3]);
+                    global_data->cur_file_read->cFontDescriptors[index][font_bbox_param] = index;
+                }
+
+                start = has_key(line, "/ItalicAngle ");
+                if (start)
+                {
+                    global_data->cur_file_read->cFontDescriptors[index][italic_angle_param] = get_array_values_i(line, start, ' ')[0];
+                }
+
+                start = has_key(line, "/Ascent ");
+                if (start)
+                {
+                    global_data->cur_file_read->cFontDescriptors[index][ascent_param] = get_array_values_i(line, start, ' ')[0];
+                }
+
+                start = has_key(line, "/Descent ");
+                if (start)
+                {
+                    global_data->cur_file_read->cFontDescriptors[index][descent_param] = get_array_values_i(line, start, ' ')[0];
+                }
+                start = has_key(line, "/CapHeight ");
+                if (start)
+                {
+                    global_data->cur_file_read->cFontDescriptors[index][cap_height_param] = get_array_values_i(line, start, ' ')[0];
+                }
+                start = has_key(line, "/XHeight ");
+                if (start)
+                {
+                    global_data->cur_file_read->cFontDescriptors[index][xheight_param] = get_array_values_i(line, start, ' ')[0];
+                }
+                start = has_key(line, "/StemV ");
+                if (start)
+                {
+                    global_data->cur_file_read->cFontDescriptors[index][stemv_param] = get_array_values_i(line, start, ' ')[0];
+                }
+                start = has_key(line, "/StemH ");
+                if (start)
+                {
+                    global_data->cur_file_read->cFontDescriptors[index][stemh_param] = get_array_values_i(line, start, ' ')[0];
+                }
+                start = has_key(line, std::vector<std::string>{"/FontFile ","FontFile2 "});
+                if (start)
+                {
+                    global_data->cur_file_read->cFontDescriptors[index][font_file_param] = get_array_values_i(line, start, ' ')[0];
+                }
+            }
+
+            read_font_file_obj(file, _obj_index);
+        }
+    }
+
+    void read_font_obj(std::ifstream& file, std::set<uint32_t> _obj_index)
+    {
+        std::set<uint32_t> font_descs;
+        std::string line;
+        for (auto& index : _obj_index)
+        {
+            file.clear();
+            file.seekg(global_data->cur_file_read->obj_offsets[index][BYTE_OFFSET]);
+
+            //global_data->cur_file_read->cFont[index] = Font(index);
+            while (std::getline(file, line))
+            {
+                if (end_of_obj(line)) { break; }
+
                 int start = has_key(line, "/Type ");
                 if (start)
                 {
@@ -329,31 +458,56 @@ namespace PDFREAD {
                     }
                 }
 
-                start = has_key(line, std::vector<std::string>{"/SubType ","/Subtype"});
-                if(start)
+                start = has_key(line, std::vector<std::string>{"/SubType ", "/Subtype"});
+                if (start)
                 {
                     int len = get_length_to(line, start, ' ');
-                    data->cFont[index].sub_type = sub_type_map[line.substr(start, len)];
+                    std::string temp_ = line.substr(start, len - 1);
+                    if (sub_type_map.find(temp_) != sub_type_map.end())
+                    {
+                        global_data->cur_file_read->cFont[index][sub_type_param] = sub_type_map[temp_];
+                    }
+                    else
+                    {
+                        global_data->cur_file_read->cFont[index][sub_type_param] = TYPE1;
+                    }
                 }
                 start = has_key(line, "/Encoding ");
                 if (start)
                 {
                     int len = get_length_to(line, start, ' ');
-                    data->cFont[index].encoding = encoding_map[line.substr(start, len)];
+                    global_data->cur_file_read->cFont[index][encoding_param] = encoding_map[line.substr(start, len - 1)];
                 }
 
                 start = has_key(line, "/BaseFont ");
                 if (start)
                 {
                     int len = get_length_to(line, start, ' ');
-                    data->cFont[index].base_font = base_font_map[(line.substr(start, len))];
+                    std::string temp_ = (line.substr(start, len - 1));
+                    if (base_font_map.find(temp_) != base_font_map.end())
+                    {
+                        global_data->cur_file_read->cFont[index][base_font_param] = base_font_map[temp_];
+                    }
+                    else {
+                        global_data->cur_file_read->cFont[index][base_font_param] = HELVETICA;
+                    }
+                }
+
+                global_data->cur_file_read->cFont[index][font_descriptor_param] = 0;
+                start = has_key(line, "/FontDescriptor ");
+                if (start)
+                {
+                    int len = get_length_to(line, start, ' ');
+                    auto g = get_indirect_array_obj(line, start);
+                    global_data->cur_file_read->cFont[index][font_descriptor_param] = g[0];
+                    font_descs.insert(g[0]);
                 }
             }
-
         }
+        read_font_desc_obj(file,font_descs);
     }
 
-    void read_data_block(std::istream& file,std::string& block, int start, const std::string& delimiter)
+    void read_data_block(std::istream& file, std::string& block, int start, const std::string& delimiter)
     {
         file.clear();
         file.seekg(start, std::ios::beg);
@@ -367,10 +521,11 @@ namespace PDFREAD {
         }
     }
 
+
     _tm* get_tm_data(std::string& line)
     {
         _tm* __tm = new _tm;
-        std::array<int32_t,6> values;
+        std::array<int32_t, 6> values;
         std::string x;
         std::stringstream stream(line);
         int i = 0;
@@ -414,16 +569,16 @@ namespace PDFREAD {
 
     //TODO:Eliminate most of the hard coded string values with map functionalities...
     //TODO:This function needs heavy refactoring...
-    void read_content_data(std::ifstream& file,const std::set<uint32_t>& contents)
+    void read_content_data(std::ifstream& file, const std::set<uint32_t>& contents)
     {
-        for(auto index : contents)
+        for (auto index : contents)
         {
-            auto& con = data->cContent[index];
+            auto& con = global_data->cur_file_read->cContent[index];
             con = Content(index);
             //Check if the reference updates the actual values...
             std::string content_block;
 
-            read_data_block(file, content_block, data->obj_offsets[index][BYTE_OFFSET], type_string[ENDOBJ]);
+            read_data_block(file, content_block, global_data->cur_file_read->obj_offsets[index][BYTE_OFFSET], type_string[ENDOBJ]);
             dress_string(content_block);
 
             int start = has_key(content_block, "/Length ");
@@ -445,7 +600,7 @@ namespace PDFREAD {
                     bt_block += _line;
                     if (_line.find("ET") != std::string::npos) { break; }
                 }
-                
+
                 //Get multiple text blocks if any...
                 std::set<size_t>positions; positions.insert(0);
                 size_t pos = bt_block.find("Tj", 0);
@@ -456,20 +611,18 @@ namespace PDFREAD {
                 }
 
                 std::vector<std::string> _text_blocks;
-                for (auto it = positions.begin(); it!=positions.end(); ++it)
+                for (auto it = positions.begin(); it != positions.end(); ++it)
                 {
                     auto it_next = std::next(it);
                     if (it_next == positions.end()) { break; }
-                    std::string x = bt_block.substr(*it,*it_next + 2);
+                    std::string x = bt_block.substr(*it, *it_next + 2);
                     _text_blocks.push_back(x);
-                }              
+                }
 
-                
                 //Extracting individual textmarker positions
-
                 std::unordered_map<std::string, size_t> marker_positions_map;
                 std::set<size_t> marker_positions; marker_positions.insert(0);
-                for(auto& text_block:_text_blocks)
+                for (auto& text_block : _text_blocks)
                 {
                     TextBlock txb;
                     int marker_start = has_key(text_block, "Tf");
@@ -496,9 +649,9 @@ namespace PDFREAD {
                     //Get Tm start and end
                     auto it = marker_positions.find(marker_positions_map["Tm"]);
                     auto T_begin = *std::prev(it);
-                    T_begin = T_begin == 0 ? 0 : T_begin+1;
+                    T_begin = T_begin == 0 ? 0 : T_begin + 1;
 
-                    std::string t_string_data = text_block.substr(T_begin, *it - T_begin-2);
+                    std::string t_string_data = text_block.substr(T_begin, *it - T_begin - 2);
                     txb.Tm = get_tm_data(t_string_data);
 
                     it = marker_positions.find(marker_positions_map["Tf"]);
@@ -527,13 +680,13 @@ namespace PDFREAD {
         std::string line;
         std::set<uint32_t> _font_obj;
         std::set<uint32_t> _content_obj;
-        for (auto& page_obj_index : data->root->pages->mPages)
+        for (auto& page_obj_index : global_data->cur_file_read->root->pages->mPages)
         {
             file.clear();
-            file.seekg(data->obj_offsets[page_obj_index][BYTE_OFFSET], std::ios::beg);
+            file.seekg(global_data->cur_file_read->obj_offsets[page_obj_index][BYTE_OFFSET], std::ios::beg);
 
-            data->cPage[page_obj_index] = Page(page_obj_index);
-            data->cPage[page_obj_index].id = page_obj_index;
+            global_data->cur_file_read->cPage[page_obj_index] = Page(page_obj_index);
+            //global_data->cur_file_read->cPage[page_obj_index].id = page_obj_index;
 
             while (std::getline(file, line))
             {
@@ -551,14 +704,14 @@ namespace PDFREAD {
                 if (start)
                 {
                     auto g = get_array_values_i(line, start, pair[line[start]]);
-                    data->cPage[page_obj_index].media_box = media_box(g[X], g[Y], g[W], g[H]);
+                    global_data->cur_file_read->cPage[page_obj_index].media_box = media_box(g[X], g[Y], g[W], g[H]);
                 }
 
                 start = has_key(line, "/Contents ");
                 if (start)
                 {
-                    data->cPage[page_obj_index].rContents = get_indirect_array_obj(line, start, '/');
-                    for (auto x : data->cPage[page_obj_index].rContents)
+                    global_data->cur_file_read->cPage[page_obj_index].rContents = get_indirect_array_obj(line, start, '/');
+                    for (auto x : global_data->cur_file_read->cPage[page_obj_index].rContents)
                     {
                         _content_obj.insert(x);
                     }
@@ -585,12 +738,12 @@ namespace PDFREAD {
 
                     } while (std::getline(file, line));
                     dress_string(resource_block);
-                    
+
                     //Now read individual resources
                     int _start = has_key(resource_block, "/Font ");
                     int len = get_length_to(resource_block, _start, '>');
                     std::string res_line = resource_block.substr(_start + 2, len - 2);
-                    
+
                     std::string res_data;
                     std::stringstream _stream(res_line);
                     int index = 0;
@@ -599,29 +752,33 @@ namespace PDFREAD {
                         index += index == 0 ? 1 : 0;
                         auto g = get_dict_key_value_indirect_obj(res_data, index);
                         if (g.second == 0) { continue; } // -1 is code for empty in this context
-                        data->cPage[page_obj_index].rFonts[std::stoi(g.first.substr(1))] = g.second;
+                        int font_tag = std::stoi(g.first.substr(1));
+                        global_data->cur_file_read->cPage[page_obj_index].highest_font_tag = 
+                                (global_data->cur_file_read->cPage[page_obj_index].highest_font_tag < font_tag  )
+                                ? font_tag : global_data->cur_file_read->cPage[page_obj_index].highest_font_tag;
+                            
+                        global_data->cur_file_read->cPage[page_obj_index].rFonts[font_tag] = g.second;
                         _font_obj.insert(g.second);
                     }
 
                     _start = has_key(resource_block, "/ProcSet ");
 
                     len = get_length_to(resource_block, _start, ']');
-                    res_line = resource_block.substr(_start, len  );
+                    res_line = resource_block.substr(_start, len);
 
-                    data->cPage[page_obj_index].cProcSet = get_array_values_s(res_line, 0);
+                    global_data->cur_file_read->cPage[page_obj_index].cProcSet = get_mapped_values<procset_index>(get_array_values_s(res_line, 0),procset_map);
                 }
             }
-
-            data->read_objects[page_obj_index] = true;
+            global_data->cur_file_read->read_objects[page_obj_index] = true;
         }
 
-        read_font_obj(file,_font_obj);
+        read_font_obj(file, _font_obj);
         read_content_data(file, _content_obj);
     }
 
     void read_page_collector(std::ifstream& file)
     {
-        file.seekg(data->obj_offsets[data->root->pages->id][BYTE_OFFSET]);
+        file.seekg(global_data->cur_file_read->obj_offsets[global_data->cur_file_read->root->pages->id][BYTE_OFFSET]);
         std::string line;
 
         while (std::getline(file, line))
@@ -642,16 +799,16 @@ namespace PDFREAD {
             if (start)
             {
                 int x = get_length_to(line, start);
-                data->root->pages->nPages = std::stoi(line.substr(start, x));
-                std::cout << "Page Count::: " << data->root->pages->nPages << std::endl;
+                global_data->cur_file_read->root->pages->nPages = std::stoi(line.substr(start, x));
+                std::cout << "Page Count::: " << global_data->cur_file_read->root->pages->nPages << std::endl;
             }
             search = "/Kids ";
             start = has_key(line, search);
             if (start)
             {
-                data->root->pages->mPages = get_array_objs(line, start);
-               
-                if (data->root->pages->mPages.size() == data->root->pages->nPages)
+                global_data->cur_file_read->root->pages->mPages = get_array_objs(line, start);
+
+                if (global_data->cur_file_read->root->pages->mPages.size() == global_data->cur_file_read->root->pages->nPages)
                 {
                     //Todo: Page number info does not match...
                     //Todo: This is a ::PDFFix feature to be implemented later...
@@ -661,14 +818,13 @@ namespace PDFREAD {
             }
         }
 
-        data->read_objects[data->root->pages->id] = true;
+        global_data->cur_file_read->read_objects[global_data->cur_file_read->root->pages->id] = true;
     }
 
-    // add breaks when we are certain we dont need anything else;
     void read_root_obj(std::ifstream& file)
     {
         file.clear();
-        file.seekg(data->obj_offsets[data->root->id][BYTE_OFFSET]);
+        file.seekg(global_data->cur_file_read->obj_offsets[global_data->cur_file_read->root->id][BYTE_OFFSET]);
         std::string line;
 
         while (std::getline(file, line))
@@ -686,18 +842,61 @@ namespace PDFREAD {
                 }
             }
 
-            data->root->pages = new page_collection;
+            global_data->cur_file_read->root->pages = new page_collection;
             search = "/Pages ";
             start = has_key(line, search);
 
             if (start)
             {
-                data->root->pages->id = std::stoi(line.substr(start, get_length_to(line, start)));
-                std::cout << "Page Collector ID::: " << data->root->pages->id << std::endl;
+                global_data->cur_file_read->root->pages->id = std::stoi(line.substr(start, get_length_to(line, start)));
+                std::cout << "Page Collector ID::: " << global_data->cur_file_read->root->pages->id << std::endl;
                 break;
             }
         }
-        data->read_objects[data->root->id] = true;
+        global_data->cur_file_read->read_objects[global_data->cur_file_read->root->id] = true;
+    }
+
+    void __get_actual_start_xref(std::ifstream& file)
+    {
+        global_data->fix_data->faulty = true;
+
+        file.clear();
+        std::string line;
+        while (std::getline(file, line))
+        {
+            if (line.find("xref") != std::string::npos)
+            {
+                global_data->fix_data->xref_start = static_cast<size_t>(file.tellg()) - 1 - line.length();
+            }
+            if (line.find("trailer") != std::string::npos)
+            {
+                global_data->fix_data->trailer_offset = file.tellg();
+            }
+            int start = line.find("/Size ");
+            if (start != std::string::npos && global_data->fix_data->trailer_offset != 0)
+            {
+                if (global_data->fix_data->trailer_offset > file.tellg()) { continue; }
+                int integer_length = get_length_to(line, start + 6);
+                global_data->fix_data->num_obj = std::stoi(line.substr(start + 6, integer_length));
+                global_data->fix_data->obj_offsets.resize(global_data->fix_data->num_obj);
+                break;
+            }
+        }
+
+        file.clear();
+        file.seekg(0);
+        while (std::getline(file, line))
+        {
+            if (line.find("0 obj") != std::string::npos)
+            {
+                int len = get_length_to(line, 0, ' ');
+                int index = std::stoi(line.substr(0, len));
+
+                global_data->fix_data->obj_offsets[index][BYTE_OFFSET] = static_cast<int>(file.tellg()) - 8;
+                global_data->fix_data->obj_offsets[index][UID] = 0;
+                global_data->fix_data->obj_offsets[index][FLAG] = 1;
+            }
+        }
     }
 
     void read_start_xref(std::ifstream* file)
@@ -718,7 +917,20 @@ namespace PDFREAD {
             if (found)
             {
                 int value = std::stoi(line);
-                data->xref_start = value;
+                file->seekg(value);
+
+                std::string line;
+                std::getline(*file, line);
+                if (line.find("xref") != std::string::npos)
+                {
+
+                    global_data->cur_file_read->xref_start = value;
+                }
+                else {
+                    std::cout << "[WARNING]:[XREF]: Invalid xref start value...\n";
+                    __get_actual_start_xref(*file);
+                    global_data->cur_file_read->xref_start = global_data->fix_data->xref_start;
+                }
                 break;
             }
         }
@@ -726,6 +938,7 @@ namespace PDFREAD {
 
     void read_trailer_info(std::ifstream* file)
     {
+        file->clear();
         file->seekg(0);
         std::string line;
         while (std::getline(*file, line))
@@ -735,17 +948,18 @@ namespace PDFREAD {
 
             if (start)
             {
-                if (file->tellg() < data->xref_start)
+                if (file->tellg() < global_data->cur_file_read->xref_start)
                 {
                     continue; //skip any /Size attribute before the xref...
                 }
+
                 int integer_length = get_length_to(line, start);
-                data->num_obj = std::stoi(line.substr(start, integer_length));
-                data->obj_offsets.resize(data->num_obj);
-                data->obj_offsets.resize(data->num_obj);
-                data->read_objects.resize(data->num_obj);
-                std::cout << "Num_Obj::: " << data->num_obj << std::endl;
-                continue;
+                global_data->cur_file_read->num_obj = std::stoi(line.substr(start, integer_length));
+                global_data->cur_file_read->obj_offsets.resize(global_data->cur_file_read->num_obj);
+                global_data->cur_file_read->obj_offsets.resize(global_data->cur_file_read->num_obj);
+                global_data->cur_file_read->read_objects.resize(global_data->cur_file_read->num_obj);
+                
+                std::cout << "Num_Obj::: " << global_data->cur_file_read->num_obj << std::endl;
             }
 
             search = "/Root ";
@@ -754,8 +968,8 @@ namespace PDFREAD {
             if (start)
             {
                 int integer_length = get_length_to(line, start);
-                data->root->id = std::stoi(line.substr(start, integer_length));
-                std::cout << "ss:: " << data->root->id << std::endl;
+                global_data->cur_file_read->root->id = std::stoi(line.substr(start, integer_length));
+                std::cout << "ss:: " << global_data->cur_file_read->root->id << std::endl;
                 break;
             }
         }
@@ -763,19 +977,25 @@ namespace PDFREAD {
 
     void read_obj_offsets(std::ifstream& file)
     {
+        if (global_data->fix_data->faulty)
+        {
+            global_data->cur_file_read->obj_offsets = global_data->fix_data->obj_offsets;
+            return;
+        }
+
         std::string line;
 
-        file.seekg(data->xref_start);
+        file.seekg(global_data->cur_file_read->xref_start);
         std::getline(file, line); //read: xref
         std::getline(file, line); //read: 0-xxx 
 
-        for (int i = 0; i < data->num_obj; i++)
+        for (int i = 0; i < global_data->cur_file_read->num_obj; i++)
         {
             std::getline(file, line);
 
-            try 
-            { 
-                data->obj_offsets[i][BYTE_OFFSET] = std::stoi(line.substr(0, 10)); 
+            try
+            {
+                global_data->cur_file_read->obj_offsets[i][BYTE_OFFSET] = std::stoi(line.substr(0, 10));
             }
             catch (std::invalid_argument& e)
             {
@@ -783,430 +1003,78 @@ namespace PDFREAD {
             }
             try
             {
-                data->obj_offsets[i][UID] = std::stoi(line.substr(11, 5));
+                global_data->cur_file_read->obj_offsets[i][UID] = std::stoi(line.substr(11, 5));
             }
             catch (std::invalid_argument& e)
             {
                 std::cout << "[ERROR]:[XREF_OFFSETS]:Invalid offset data\n";
             }
-            data->obj_offsets[i][FLAG] = (line.substr(17, 1) == "f") ? 0 : 1; //NOTE: f = 0 && n = 1
+            global_data->cur_file_read->obj_offsets[i][FLAG] = (line.substr(17, 1) == "f") ? 0 : 1; //NOTE: f = 0 && n = 1
         }
     }
 
-    void Initialize()
+
+    void ReadToStructure()
     {
-        std::ifstream file(current_path, std::ios::binary);
+        std::ifstream file(global_data->cur_file_read->current_path, std::ios::binary);
         if (!file.is_open())
         {
             std::cout << "Could not open file...\n";
         }
-        data = new read_filedata;
-
-        std::getline(file, data->version);
+        
+        std::getline(file, global_data->cur_file_read->version);
         file.seekg(0, std::ios::end);
-        data->file_bytes = file.tellg();
+        global_data->cur_file_read->file_bytes = file.tellg();
         file.seekg(0, std::ios::beg);
+        
 
         read_start_xref(&file);
 
-        data->root = new root_node;
-
+        global_data->cur_file_read->root = new root_node;
         read_trailer_info(&file);
+
         read_obj_offsets(file);
+        
 
         read_root_obj(file);
         read_page_collector(file);
         read_page_data(file);
 
         file.close();
-        
+
     }
 
-    void RequestPath(const char* path)
+    void RequestReadPath(const char* path)
     {
-        current_path = path;
-    }
+        global_data->file_reads.emplace_back(std::make_shared<_filedata>());
+        global_data->cur_file_read = global_data->file_reads[0];
 
+        global_data->cur_file_read->current_path = path;
+    }
+    
     void ShutDown()
     {
         std::cout << "Shutdown function has beend called\n";
-        delete data;
-    }
-    
-    //WRITE TO................................................................
-
-    int indent_track = 0;//TODO: Make static in function below...
-    void indent(std::string& out) { for (int i = 0; i < indent_track + 2 ; i++) { out += " "; }; }//Confirm whether to make inline...
-
-    inline void write_line(std::ofstream& file, std::string& line)
-    {
-        file << line;
-        line.clear();
-    }
-
-    void create_obj_start_line(std::string& out, uint32_t obj_index)
-    {
-        out += std::to_string(obj_index) + " 0 obj";
-      
-        out += key_string[KEY_ENDLINE_S] + DICT_OPEN + endline;
+        //global_data->cur_file_read.reset();
         
     }
-
-    void create_obj_end_line(std::string& out)
+    Object add_obj(type_index type)
     {
-        out += ">>\n" + type_string[ENDOBJ]+ endline;
+        uint32_t index = global_data->cur_file_read->num_obj;
+        global_data->cur_file_read->num_obj++;
+
+        return Object(index, type);
     }
 
-    void create_obj_type_line(std::string& out,type_index type)
-    {
-        indent(out);
-        out += "/Type " + type_string[type] + endline;
-    }
+  
 
-    void create_obj_sub_type_line(std::string& out, sub_type_index type)
-    {
-        indent(out);
-        out += "/SubType " + sub_type_string[type] + endline;
-    }
-
-    void create_direct_key_value_line(std::string& out, key_index key, std::string value)
-    {
-        indent(out);
-        out += key_string[key] + " " + value + endline;
-    }
-
-    //TODO: Add maps for trailing strings "0 R"eg.
-    //TODO: implement reading something like this and thenn get other functions to do some more work later
-    //      read kids and counts in the same way ... 1. extract array full length then individual functions
-    std::string create_indirect_obj_value_array_string(const std::vector<uint32_t>& value)
-    {
-        std::string out;
-        const std::string _z = " 0 R";
-        for (auto& x : value)
-        {
-            out += std::to_string(x) + _z + " ";//adding spaces to last elements becareful
-        }
-        return out;
-    }
-
-    std::string create_indirect_obj_value_array_string(uint32_t value)
-    {
-        std::vector<uint32_t>v_value{value};
-        return create_indirect_obj_value_array_string(v_value);
-    }
-
-
-    void create_key_array_line(std::string& out, key_index key, const std::string& value_string,const char& array_type = '[')
-    {
-        indent(out);
-        out +=  key_string[key] + " "+ array_type + value_string + pair[array_type] + "\n";
-    }
-
-    std::string create_array_string(const std::string& value_string, const char array_type = '[')
-    {
-        std::string out;
-        out += array_type + value_string + pair[array_type];
-        return out;
-    }
-
-    void create_key_indirect_obj_value_ref_line(std::string& out, key_index key, const std::string& value_string)
-    {
-        indent(out);
-        out +=  key_string[key] + " " + value_string + endline;
-    }
-
-    void create_key_label_indirect_obj_value_ref_line(std::string& out, label_index key,int label_count, const std::string& value_string)
-    {
-        indent(out);
-        out += label_string[key] + std::to_string(label_count) + std::string(" ") + value_string + endline;
-    }
-
-    std::string create_media_box_value_string(media_box& box)
-    {
-        std::string out = "";
-        for (auto x : box.asArray())
-        {
-            out += std::to_string(x) + " ";
-        }
-        return out;
-    }
-    
-    void insert_char(std::string& out, char c, int n)
-    {
-        for (int i = 0; i < n; i++) { out += c; }
-    }
-    
-    template <typename T>
-    std::string create_value_array_string(std::vector<T> values)
-    {
-        std::string out = "";
-        
-        if constexpr (std::is_arithmetic_v<T>)
-        {
-            for (auto& x : values)
-            {
-                out += std::to_string(x) + " ";
-            }
-        }
-        else if constexpr(std::is_same_v<T,std::string>) {
-            for (auto& x : values)
-            {
-                out += x + " ";
-            }
-        }
-
-        return out;
-    }
-
-    void create_custom_line(std::string& out, const std::string& value,int indent = 0)
-    {
-        for (int i = 0; i < indent; i++) { out += " "; }
-        out += value  + endline;
-    }
-
-    void create_dict_key_opening_line(std::string& out, key_index type,int indent_override = 0)
-    {
-        indent_track += 2 + indent_override;
-        for (int i = 0; i < indent_track; i++) { out += " "; }
-        out += key_string[type] + " " + DICT_OPEN + endline;
-    }
-
-    void create_dict_close_line(std::string& out)
-    {
-        for (int i = 0; i < indent_track; i++) { out += " "; }
-        out += DICT_CLOSE ;
-        out += endline;
-        indent_track -= (indent_track == 0) ? 0 : 2;
-    }
-
-    void create_key_line(std::string& out, key_line_index key)
-    {
-        out += key_line_string[key] + endline;
-    }
-
-    //TODO: Consider keeping an output file for every file opened just incase.
-    //TODO: Create a global "instance object that stores a list of all filedata objects that are still open"
-    //      and all output file streams
-
-    void write_root_obj(std::ofstream& file)
-    {
-        int offset = file.tellp();
-        
-        write_data->root_id = data->root->id;
-        write_data->obj_offsets[data->root->id] = {offset,data->obj_offsets[data->root->id][UID],data->obj_offsets[data->root->id][FLAG]};
-        write_data->obj_offsets[0] = { 0,65535,0 };
-        
-
-        std::string line;
-        create_obj_start_line(line, data->root->id);
-        
-        create_obj_type_line(line, type_index::CATALOG);
-
-        std::string temp = create_indirect_obj_value_array_string(data->root->pages->id);
-        create_key_indirect_obj_value_ref_line(line, key_index::KEY_PAGES, temp);
-
-        create_obj_end_line(line);
-        write_line(file, line);
-    }
-
-    void write_page_collector(std::ofstream& file)
-    {
-        int offset = file.tellp();
-
-        write_data->obj_offsets[data->root->pages->id] = { offset,data->obj_offsets[data->root->pages->id][UID],data->obj_offsets[data->root->pages->id][FLAG] };
-
-        std::string line;
-        create_obj_start_line(line, data->root->pages->id);
-     
-        create_obj_type_line(line, type_index::PAGES);
-       
-        std::string temp = create_indirect_obj_value_array_string(data->root->pages->mPages);
-        create_key_array_line(line, key_index::KEY_KIDS, temp);
-              
-        create_direct_key_value_line(line, KEY_COUNT, std::to_string(data->root->pages->nPages));
-      
-        create_obj_end_line(line);
-        write_line(file, line);
-    }
-
-    void write_page_obj(std::ofstream& file)
-    {
-        int offset = 0;
-        for (auto& x : data->cPage)
-        {
-            offset = file.tellp();
-            auto& page_data = x.second;
-            write_data->obj_offsets[page_data.id] = { offset,data->obj_offsets[page_data.id][UID],data->obj_offsets[page_data.id][FLAG] };
-            std::string line;
-            create_obj_start_line(line, page_data.id);
-            create_obj_type_line(line, type_index::PAGE);
-
-            create_key_array_line(line,key_index::KEY_MEDIABOX, create_media_box_value_string(page_data.media_box));
-            create_key_indirect_obj_value_ref_line(line, KEY_CONTENTS,create_indirect_obj_value_array_string(page_data.rContents));
-
-            //Resources
-            create_dict_key_opening_line(line, KEY_RESOURCES);
-            {
-                //Font 
-                {
-                    create_dict_key_opening_line(line, KEY_FONT);
-
-                    for (auto& y : page_data.rFonts)
-                    {
-                        std::string temp = create_indirect_obj_value_array_string(y.second);
-
-                        create_key_label_indirect_obj_value_ref_line(line, LABEL_F, y.first, temp);
-                    }
-
-                    create_dict_close_line(line);
-                }
-
-                //ProcSet 
-                {
-                    create_key_array_line(line, KEY_PROCSET, create_value_array_string<std::string>(page_data.cProcSet));
-                }
-
-            }
-            create_dict_close_line(line);
-
-            create_obj_end_line(line);
-            write_line(file, line);
-        }
-    }
-
-    void write_font_obj(std::ofstream& file)
-    {
-        int offset = 0;
-        for (auto& x : data->cFont)
-        {
-            offset = file.tellp();
-            auto& font_data = x.second;
-            write_data->obj_offsets[font_data.id] = { offset,data->obj_offsets[font_data.id][UID],data->obj_offsets[font_data.id][FLAG] };
-            std::string line;
-
-            create_obj_start_line(line, font_data.id);
-            create_obj_type_line(line, type_index::FONT);
-            create_obj_sub_type_line(line, font_data.sub_type);
-
-            create_direct_key_value_line(line, KEY_BASE_FONT, base_font_string[font_data.base_font]);
-            create_direct_key_value_line(line, KEY_ENCODING, encoding_string[font_data.encoding]);
-
-            create_obj_end_line(line);
-            write_line(file, line);
-        }
-    }
-
-
-    void write_content_obj(std::ofstream& file)
-    {
-        int offset = 0;
-        for (auto& x : data->cContent)
-        {
-            offset = file.tellp();
-            auto& content_data = x.second;
-            write_data->obj_offsets[content_data.id] = { offset,data->obj_offsets[content_data.id][UID],data->obj_offsets[content_data.id][FLAG] };
-            std::string line;
-            create_obj_start_line(line, content_data.id);
-
-            create_direct_key_value_line(line, KEY_LENGTH, std::to_string(content_data.stream_length));
-         
-            create_custom_line(line, DICT_CLOSE); 
-            
-            create_custom_line(line, type_string[STREAM]);
-            {
-                if (!x.second.BT_ETs.empty())
-                {
-                    create_custom_line(line, "BT");
-                    for (auto& y : content_data.BT_ETs)
-                    {
-                        create_custom_line(line, y.Tf->stringify());
-                        create_custom_line(line, (create_value_array_string<int32_t>(y.Tm->asArray()) + "Tm"));
-                        create_custom_line(line, create_array_string(y.Tj->text, '(') + "Tj");
-                    }
-                    create_custom_line(line, "ET");
-                }
-            }
-            create_custom_line(line, "endstream");
-            create_custom_line(line, "endobj");
-            write_line(file, line);
-            
-        }
-    }
-
-    void write_xref_table(std::ofstream& file)
-    {
-        size_t offset = file.tellp();
-        std::string line;
-        create_key_line(line, KL_XREF);
-        create_custom_line(line, "0 " + std::to_string(data->num_obj));
-
-        //create_custom_line(line, "0000000000 65535 f ");
-
-        for (auto x : write_data->obj_offsets)
-        {  
-            
-            std::string _byteoffset = "0000000000 ";
-            std::string int_value = std::to_string(x[BYTE_OFFSET]);
-            int start_pos = _byteoffset.length() - int_value.length() -1;
-            for (int i = 0; i < int_value.length(); i++)
-            {
-                _byteoffset[i + start_pos] = int_value[i];
-            }
-
-            std::string _uid = "00000 ";
-            int_value = std::to_string(x[UID]);
-
-            start_pos = _uid.length() - int_value.length() - 1;
-            for (int i = 0; i < int_value.length(); i++)
-            {
-                _uid[i + start_pos] = int_value[i];
-            }
-
-            std::string _flag = (x[FLAG]) ? "n" : "f";
-
-            std::string xref_table_line = _byteoffset + _uid + _flag;
-
-            create_custom_line(line,xref_table_line);
-        }
-        create_key_line(line, KL_TRAILER);
-        create_custom_line(line, DICT_OPEN);
-        {
-            create_key_indirect_obj_value_ref_line(line, KEY_ROOT, create_indirect_obj_value_array_string(data->root->id));
-            create_direct_key_value_line(line, KEY_SIZE, std::to_string(data->num_obj));
-        }
-        create_custom_line(line, DICT_CLOSE); 
-        create_key_line(line, KL_STARTXREF);
-        create_custom_line(line, std::to_string(offset));
-        write_line(file, line);
-    }
-
- 
-    void WriteToFile()
-    {
-        std::ofstream file("outputpdf.pdf", std::ios::binary);
-        if (!file.is_open())
-        {
-            std::cout << "Could not write to file...\n";
-            return;
-        }
-        write_data = new write_filedata;
-
-        write_data->obj_offsets.resize(data->num_obj);
-        write_line(file, data->version);
-        write_root_obj(file);
-        write_page_collector(file);
-        write_page_obj(file);
-        write_font_obj(file);
-        write_content_obj(file);
-        write_xref_table(file);
-        write_line(file, data->eof);
-    }
 
     
+
+    /// @brief New PDF file method definitions...
+
+
+
 }
 
-//TYPES of writes
-// Direct key_value_write
-// Indirect_obj_array
-// array_values
-//
+

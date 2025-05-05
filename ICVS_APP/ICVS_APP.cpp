@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-#include "../ICVS/pdf_mill.h"
+#include "../ICVS/includes/pdf_mill.h"
 
 int win_width = 1280;
 int win_height = 1024;
@@ -23,6 +23,7 @@ std::string file_name_buffer = "No file loaded.";
 
 int p = 5;
 const char** r{};
+bool pages_list = false;
 
 void render_()
 {
@@ -66,38 +67,39 @@ void render_()
     ImGui::Text("%s", file_name_buffer.c_str());
     if(ImGui::InputText("Path From", file_path_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Open File", ImVec2(440, 20)))
     {
-        PDFREAD::ShutDown();
-        PDFREAD::RequestReadPath(file_path_buffer);
-        PDFREAD::Initialize();
+        PDF_MILL::ShutDown();
+        PDF_MILL::RequestReadPath(file_path_buffer);
+        PDF_MILL::ReadToStructure();
 
+        
         std::string file_p = file_path_buffer;
         int index = file_p.find(".");
         file_name_buffer = "FILE::: " + file_p.substr(0, index);
-        p = PDFREAD::GetNumberOfPages();
-
-      /*  r = PDFREAD::GetPagesNumbers();*/
+       
+        p = PDF_MILL::GetNumberOfPages();
+        pages_list = true;
     }
    
     if (ImGui::Button("Add Page", ImVec2(440, 20)))
     {
-        PDFREAD::AddPage();
+        PDF_MILL::AddPage();
     }
 
     if (ImGui::Button("Remove Page", ImVec2(440, 20)))
     {
-        PDFREAD::RemovePage(4);
+        PDF_MILL::RemovePage(4);
     }
     
    
     if (ImGui::Button("Add Font", ImVec2(440, 20)))
     {
-        PDFREAD::AddFont(2, PDFREAD::COURIER_BOLD);
+        PDF_MILL::AddFont(2, PDF_MILL::COURIER_BOLD);
     }
     
     if (ImGui::InputText("Path To", write_path, 256, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Write To File", ImVec2(440, 20)))
     {
-        PDFREAD::RequestWritePath(write_path);
-        PDFREAD::WriteToFile();
+        PDF_MILL::RequestWritePath(write_path);
+        PDF_MILL::WriteToFile();
     }
     
     ImGui::End();
@@ -142,6 +144,9 @@ int main()
 
 
     bool show_demo_window = false;
+    
+    PDF_MILL::Initialize();
+
     while (!glfwWindowShouldClose(window))
     {
         ImGui_ImplOpenGL3_NewFrame();

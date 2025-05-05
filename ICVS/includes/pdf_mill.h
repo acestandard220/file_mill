@@ -7,12 +7,12 @@
 #include <sstream>
 #include <set>
 #include <iomanip>
+#include <algorithm>
+#include <ostream>
+#include <string>
 
-#ifdef PDFREAD_EXPORTS
-#define ICVS_DLL __declspec(dllexport)
-#else
-#define ICVS_DLL __declspec(dllimport)
-#endif
+#include "pdf_mill_core.h"
+
 
 //#define INDENT for (int i = 0; i < indent_track + 2; i++) { out += " "; }
 
@@ -26,8 +26,8 @@ constexpr const char* endline = "\n";
 
 //TODO: Implement custom indent macro...
 
-std::string current_path;
-namespace PDFREAD
+
+namespace PDF_MILL
 {
     // Don't touch
     enum media_box_values
@@ -147,7 +147,7 @@ namespace PDFREAD
     {
         RESOURCE_FONT = KEY_FONT,
         RESOURCE_PROCSET = KEY_PROCSET,
-        _resource_type_last // Make sure it's always last
+        _resource_type_last 
     };
 
     enum version_index
@@ -184,9 +184,19 @@ namespace PDFREAD
     extern std::array<const std::string, base_font_last> base_font_string;
     extern std::array<const std::string, base_font_last> encoding_string;
     extern std::array<const std::string, _key_index_last> key_string;
+    extern std::array<const std::string, _sub_type_index_last> sub_type_string;
+    extern std::array<const std::string, _key_line_last> key_line_string;
+    extern std::array<const std::string, _resource_type_last> resource_string;
+    extern std::array<const std::string, _procset_index_last> procset_string;
+
     extern std::array<const char*, _label_index_last>label_string;
     extern std::array<const char*, _version_index_last>version_string;
 
+    extern std::unordered_map<char, char> pair;
+    extern std::unordered_map<std::string, procset_index>procset_map;
+    extern std::unordered_map<std::string, base_font> base_font_map;
+    extern std::unordered_map<std::string, encoding> encoding_map;
+    extern std::unordered_map<std::string, sub_type_index> sub_type_map;
 
     struct root_node;
     struct Page;
@@ -239,10 +249,11 @@ namespace PDFREAD
         bool faulty = false;
     };
 
-    struct read_filedata
+
+    struct _filedata
     {
 
-        read_filedata() = default;
+        _filedata() = default;
         size_t file_bytes;
         size_t xref_start;
         size_t xref_start_c;
@@ -263,6 +274,9 @@ namespace PDFREAD
         std::unordered_map<uint32_t, font_box> cFontBox;
         std::unordered_map<uint32_t, Content> cContent;
 
+        std::string current_path;
+        std::list<uint32_t> available_index;
+
     };
 
     struct write_filedata
@@ -281,14 +295,42 @@ namespace PDFREAD
         std::string write_path;
     };
 
+    struct new_filedata
+    {
+        new_filedata() = default;
+
+        size_t file_bytes;
+        size_t xref_start;
+        size_t xref_start_c;
+        size_t num_obj;
+
+        std::string version;
+        std::string eof = "%%EOF";
+
+        root_node* root = nullptr;
+
+        std::vector<std::array<int, _xref_values_last>> obj_offsets;
+
+        std::unordered_map<uint32_t, Page> cPage;
+        std::unordered_map<uint32_t, std::array<int, _font_parameter_last>> cFont;
+        std::unordered_map<uint32_t, std::array<int, _font_desc_parameter_last>> cFontDescriptors; 
+        std::unordered_map<uint32_t, Font_File> cFontFile;
+        std::unordered_map<uint32_t, font_box> cFontBox;
+        std::unordered_map<uint32_t, Content> cContent;
+
+
+    };
+
     struct global_file_instance
     {
-        std::vector<std::shared_ptr<read_filedata>> file_reads;
+        std::vector<std::shared_ptr<_filedata>> file_reads;
         std::vector<std::shared_ptr<write_filedata>> file_writes;
+        std::vector<std::shared_ptr<new_filedata>> new_writes;
 
-        std::shared_ptr<read_filedata> cur_file_read;
+        std::shared_ptr<_filedata> cur_file_read;
         std::shared_ptr<write_filedata> cur_file_write;
         std::shared_ptr<fix_filedata> fix_data;
+        std::shared_ptr<new_filedata> cur_new_write;
     };
 
     struct page_collection
@@ -363,7 +405,7 @@ namespace PDFREAD
 
     struct _tf
     {
-        int tag;//might change
+        int tag;
         uint16_t size;
         const std::string id = "Tf";
 
@@ -408,15 +450,17 @@ namespace PDFREAD
         page_collection* pages = nullptr;
     };
 
-
+    extern global_file_instance* global_data;
     extern "C" ICVS_DLL void Initialize();
+
+    extern "C" ICVS_DLL void ReadToStructure();
     extern "C" ICVS_DLL void ShutDown();
     extern "C" ICVS_DLL void RequestReadPath(const char* path);
-    
-    extern "C" void FixXref(std::string& path);
-    
+        
     extern "C" ICVS_DLL void AddPage();
-    extern "C" ICVS_DLL  void RemovePage(int page_num);
+    extern "C" ICVS_DLL void RemovePage(int page_num);
+    extern "C" ICVS_DLL void ChangePageSize(int page_num, int x, int y);
+
     extern "C" ICVS_DLL void UpdateVersion(version_index version);
     
     extern "C" ICVS_DLL void ChangeFont(int page_num, int tag,base_font font);
@@ -425,10 +469,13 @@ namespace PDFREAD
     extern "C" ICVS_DLL int GetNumberOfPages();
     extern "C" ICVS_DLL uint32_t GetPageObjNumber(int page_number);
     extern "C" ICVS_DLL const char** GetPagesNumbers();
-    
 
     extern "C" ICVS_DLL void WriteToFile();
     extern "C" ICVS_DLL void RequestWritePath(std::string path);
+    
+
+
+    extern "C" ICVS_DLL void WriteNewPDF();
 
 
 }
@@ -436,4 +483,6 @@ namespace PDFREAD
 //ERRORS in pdf
 //When the pdf page has no content references.
 // 
-//....
+//...
+
+//BUG: Some pages repeat themselves during excessive removal and additions...
