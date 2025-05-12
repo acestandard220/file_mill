@@ -128,7 +128,6 @@ namespace PDF_MILL
     }
 
 
-
     void create_custom_line(std::string& out, const std::string& value, int indent = 0)
     {
         for (int i = 0; i < indent; i++) { out += " "; }
@@ -305,14 +304,15 @@ namespace PDF_MILL
 
             create_custom_line(line, type_string[STREAM]);
             {
-                if (!x.second.BT_ETs.empty())
+                if (!x.second.text_blocks.empty())
                 {
                     create_custom_line(line, "BT");
-                    for (auto& y : content_data.BT_ETs)
+                    for (auto& y : content_data.text_blocks)
                     {
-                        create_custom_line(line, y.Tf->stringify());
-                        create_custom_line(line, (create_value_array_string<int32_t>(y.Tm->asArray()) + "Tm"));
-                        create_custom_line(line, create_array_string(y.Tj->text, '(') + "Tj");
+                        create_custom_line(line, label_string[LABEL_F] + std::to_string(y.font_tag) + " " + std::to_string(y.font_size) + " " + "Tf");
+                        create_custom_line(line, (create_value_array_string<int32_t>(std::vector<int32_t>{y.text_matrix[0], y.text_matrix[1], y.text_matrix[2],
+                            y.text_matrix[3], y.text_matrix[4], y.text_matrix[5]}) + "Tm"));
+                        create_custom_line(line, create_array_string(y.text, '(') + "Tj");
                     }
                     create_custom_line(line, "ET");
                 }

@@ -11,6 +11,7 @@
 #include <ostream>
 #include <string>
 
+#pragma once
 #include "pdf_mill_core.h"
 
 
@@ -135,6 +136,7 @@ namespace PDF_MILL
         ZAPFDINGBATS,
         base_font_last
     };
+
     enum encoding
     {
         MACEXPERTENCODING,
@@ -252,11 +254,9 @@ namespace PDF_MILL
 
     struct _filedata
     {
-
         _filedata() = default;
         size_t file_bytes;
         size_t xref_start;
-        size_t xref_start_c;
         size_t num_obj;
 
         std::string version;
@@ -265,7 +265,7 @@ namespace PDF_MILL
         root_node* root = nullptr;
 
         std::vector<std::array<int, _xref_values_last>> obj_offsets;
-        std::vector<bool> read_objects;//keep track of objects that have been read
+        std::vector<bool> read_objects; //keep track of objects that have been read
 
         std::unordered_map<uint32_t, Page> cPage;
         std::unordered_map<uint32_t, std::array<int, _font_parameter_last>> cFont;
@@ -276,7 +276,6 @@ namespace PDF_MILL
 
         std::string current_path;
         std::list<uint32_t> available_index;
-
     };
 
     struct write_filedata
@@ -340,8 +339,7 @@ namespace PDF_MILL
         uint32_t nPages = 0;
         media_box* media_box = nullptr;
 
-        const int get_obj_index(int page_num)const { return mPages[page_num-1]; }
-
+        const int get_obj_index(int page_num)const { return mPages[page_num - 1]; }
     };
 
     struct Object
@@ -428,9 +426,12 @@ namespace PDF_MILL
 
     struct TextBlock
     {
-        _tf* Tf;
-        _tm* Tm;
-        _tj* Tj;
+        uint32_t font_size;
+        int font_tag;
+        std::array<int32_t, 2> text_position;
+
+        std::array<int32_t, 6>text_matrix;
+        std::string text = "";
     };
 
     struct Content : public Object
@@ -441,7 +442,7 @@ namespace PDF_MILL
         {
         }
         size_t stream_length = 0;
-        std::vector<TextBlock> BT_ETs;
+        std::vector<TextBlock> text_blocks;
     };
 
     struct root_node
@@ -451,6 +452,7 @@ namespace PDF_MILL
     };
 
     extern global_file_instance* global_data;
+
     extern "C" ICVS_DLL void Initialize();
 
     extern "C" ICVS_DLL void ReadToStructure();
@@ -469,6 +471,10 @@ namespace PDF_MILL
     extern "C" ICVS_DLL int GetNumberOfPages();
     extern "C" ICVS_DLL uint32_t GetPageObjNumber(int page_number);
     extern "C" ICVS_DLL const char** GetPagesNumbers();
+    extern "C" ICVS_DLL std::array<int,4> GetPageMediaBox(int page_number);
+    extern "C" ICVS_DLL std::vector<TextBlock> GetPageTextBlocks(int page_number);
+    extern "C" ICVS_DLL base_font GetPageBaseFont(int page_number, int font_tag);
+    //extern "C" ICVS_DLL std::array<int, 2> GetPageTextPosition(int page_number);
 
     extern "C" ICVS_DLL void WriteToFile();
     extern "C" ICVS_DLL void RequestWritePath(std::string path);

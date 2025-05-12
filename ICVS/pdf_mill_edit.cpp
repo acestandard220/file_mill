@@ -148,14 +148,34 @@ namespace PDF_MILL
         return r.data();
     }
 
-    const char** re()
+    std::array<int,4> PDF_MILL::GetPageMediaBox(int page_number)
     {
-        const char** r = {};
-        for (int i = 0; i < global_data->cur_file_read->root->pages->nPages; i++)
-        {
-            r[i] = std::to_string(i).c_str();
+        uint32_t page_index = global_data->cur_file_read->root->pages->get_obj_index(page_number);
+        return global_data->cur_file_read->cPage[page_index].media_box.asArray();
+    }
 
+    std::vector<TextBlock> GetPageTextBlocks(int page_number)
+    {
+        std::vector<TextBlock> r;
+        uint32_t page_index = global_data->cur_file_read->root->pages->get_obj_index(page_number);
+
+        for(auto content_index : global_data->cur_file_read->cPage[page_index].rContents)
+        {
+            auto content = global_data->cur_file_read->cContent[content_index];
+            for (auto tb : content.text_blocks)
+            {
+                r.push_back(tb);
+            }
         }
         return r;
     }
+
+    base_font GetPageBaseFont(int page_number, int font_tag)
+    {
+        uint32_t page_index = global_data->cur_file_read->root->pages->get_obj_index(page_number);
+        uint32_t font_index = global_data->cur_file_read->cPage[page_index].rFonts[font_tag];
+
+        return (base_font)global_data->cur_file_read->cFont[font_index][base_font_param];
+    }
+
 }

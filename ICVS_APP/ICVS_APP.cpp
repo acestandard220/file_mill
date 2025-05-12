@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "../ICVS/includes/pdf_mill.h"
+#include "../ICVS_RENDERER/renderer.h"
 
 int win_width = 1280;
 int win_height = 1024;
@@ -22,6 +23,7 @@ char write_path[256] = "outputpdf.pdf";
 std::string file_name_buffer = "No file loaded.";
 
 int p = 5;
+int current_page_number = 1;
 const char** r{};
 bool pages_list = false;
 
@@ -30,7 +32,7 @@ void render_()
     static bool dockspaceOpen = true;
     static bool opt_fullscreen = true;
     static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
-    
+
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
     if (opt_fullscreen)
     {
@@ -43,70 +45,79 @@ void render_()
         window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
         window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
     }
-    
-    
+
+
     if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
         window_flags |= ImGuiWindowFlags_NoBackground;
-    
-    
+
+
     ImGui::Begin("DockSpace Demo", &dockspaceOpen, window_flags);
     ImGui::PopStyleVar(2);
-    
+
     // Submit the DockSpace
     ImGuiIO& io = ImGui::GetIO();
-    
+
     if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
     {
         ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
         ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
-    
+
     }
-    
+
     bool demo = true;
     ImGui::Begin("Inspector");
     ImGui::Text("%s", file_name_buffer.c_str());
-    if(ImGui::InputText("Path From", file_path_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Open File", ImVec2(440, 20)))
+    if (ImGui::InputText("Path From", file_path_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Open File", ImVec2(440, 20)))
     {
         PDF_MILL::ShutDown();
         PDF_MILL::RequestReadPath(file_path_buffer);
         PDF_MILL::ReadToStructure();
 
-        
         std::string file_p = file_path_buffer;
         int index = file_p.find(".");
         file_name_buffer = "FILE::: " + file_p.substr(0, index);
-       
+
         p = PDF_MILL::GetNumberOfPages();
         pages_list = true;
     }
-   
+
     if (ImGui::Button("Add Page", ImVec2(440, 20)))
     {
         PDF_MILL::AddPage();
+        
     }
 
     if (ImGui::Button("Remove Page", ImVec2(440, 20)))
     {
         PDF_MILL::RemovePage(4);
     }
-    
-   
+
     if (ImGui::Button("Add Font", ImVec2(440, 20)))
     {
         PDF_MILL::AddFont(2, PDF_MILL::COURIER_BOLD);
     }
-    
+
     if (ImGui::InputText("Path To", write_path, 256, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Write To File", ImVec2(440, 20)))
     {
         PDF_MILL::RequestWritePath(write_path);
         PDF_MILL::WriteToFile();
     }
-    
+
+    if(pages_list)
+    {
+        ImGui::SliderInt("Page Number", &current_page_number, 1, PDF_MILL::GetNumberOfPages());
+    }
+
     ImGui::End();
-    
+
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0,0 });
+
     ImGui::Begin("ScenePort");
-    
+
+    ImGui::Image(
+        PDF_RENDERER::GetTextureID(), ImVec2(1280,1024), ImVec2(0, 1), ImVec2(1, 0)
+        );
+
     ImGui::End();
 
     ImGui::Begin("FILE DATA");
@@ -146,7 +157,8 @@ int main()
     bool show_demo_window = false;
     
     PDF_MILL::Initialize();
-
+    PDF_RENDERER::InitializeRenderer();    
+    glViewport(0, 0, 1280, 1024);
     while (!glfwWindowShouldClose(window))
     {
         ImGui_ImplOpenGL3_NewFrame();
@@ -157,6 +169,14 @@ int main()
         glClearColor(0.1f, 0.3f, 0.2f, 1.0f);
 
         render_();
+        
+        if (pages_list)
+        {
+            PDF_RENDERER::BeginRender(current_page_number);
+            PDF_RENDERER::RenderPage(current_page_number);
+            PDF_RENDERER::RenderPageText(current_page_number);
+            PDF_RENDERER::EndRender();
+        }
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

@@ -522,29 +522,23 @@ namespace PDF_MILL {
     }
 
 
-    _tm* get_tm_data(std::string& line)
+    void get_tm_data(std::string& line, TextBlock& text_block)
     {
-        _tm* __tm = new _tm;
         std::array<int32_t, 6> values;
         std::string x;
         std::stringstream stream(line);
         int i = 0;
         while (std::getline(stream, x, ' '))
         {
-            values[i++] = std::stoi(x);
+            text_block.text_matrix[i++] = std::stoi(x);
         }
-        __tm->a = values[0];
-        __tm->b = values[1];
-        __tm->c = values[2];
-        __tm->d = values[3];
-        __tm->e = values[4];
-        __tm->f = values[5];
-        return __tm;
+
+        text_block.text_position[0] = text_block.text_matrix[4];
+        text_block.text_position[1] = text_block.text_matrix[5];
     }
 
-    _tf* get_tf_data(std::string& line)
+    void get_tf_data(std::string& line, TextBlock& text_block)
     {
-        _tf* __tf = new _tf;
         std::vector<std::string> values;
 
         std::string x;
@@ -554,17 +548,14 @@ namespace PDF_MILL {
         {
             values.push_back(x);
         }
-        __tf->tag = std::stoi(values[0].substr(2));
-        __tf->size = std::stoi(values[1]);
-        return __tf;
+
+        text_block.font_tag = std::stoi(values[0].substr(2));
+        text_block.font_size = std::stoi(values[1]);
     }
 
-    _tj* get_tj_data(std::string& line)
+    void get_tj_data(std::string& line, TextBlock& text_block)
     {
-        _tj* __tj = new _tj;
-
-        __tj->text = get_array_values_s(line, 0, ')', '\n')[0];
-        return __tj;
+        text_block.text = get_array_values_s(line, 0, ')', '\n')[0];
     }
 
     //TODO:Eliminate most of the hard coded string values with map functionalities...
@@ -652,23 +643,24 @@ namespace PDF_MILL {
                     T_begin = T_begin == 0 ? 0 : T_begin + 1;
 
                     std::string t_string_data = text_block.substr(T_begin, *it - T_begin - 2);
-                    txb.Tm = get_tm_data(t_string_data);
+                    get_tm_data(t_string_data, txb);
 
                     it = marker_positions.find(marker_positions_map["Tf"]);
                     T_begin = *std::prev(it);
                     T_begin = T_begin == 0 ? 0 : T_begin + 2;
 
                     t_string_data = text_block.substr(T_begin, *it - T_begin - 2);
-                    txb.Tf = get_tf_data(t_string_data);
+                    get_tf_data(t_string_data, txb);
+                    //global_data->cur_file_read->cPage[page]
 
                     it = marker_positions.find(marker_positions_map["Tj"]);
                     T_begin = *std::prev(it);
                     T_begin = T_begin == 0 ? 0 : T_begin + 2;
                     t_string_data = text_block.substr(T_begin - 1, *it - T_begin - 2);
 
-                    txb.Tj = get_tj_data(t_string_data);
+                    get_tj_data(t_string_data, txb);
 
-                    con.BT_ETs.push_back(txb);
+                    con.text_blocks.push_back(txb);
                 }
 
             }
@@ -686,7 +678,6 @@ namespace PDF_MILL {
             file.seekg(global_data->cur_file_read->obj_offsets[page_obj_index][BYTE_OFFSET], std::ios::beg);
 
             global_data->cur_file_read->cPage[page_obj_index] = Page(page_obj_index);
-            //global_data->cur_file_read->cPage[page_obj_index].id = page_obj_index;
 
             while (std::getline(file, line))
             {
@@ -721,9 +712,7 @@ namespace PDF_MILL {
                 if (start)
                 {
                     std::string resource_block;
-                    //Pull the entire resource dictionary
-                    //Get line was used here and not on pulling specific res. 
-                    // because this one could have occupied mutiple lines
+
                     int open_dict = 0;
                     do
                     {

@@ -1,5 +1,4 @@
-%PDF-1.7
-1 0 obj
+%PDF-1.71 0 obj
 <<
   /Type /Catalog
   /Pages 2 0 R 
@@ -8,17 +7,8 @@ endobj
 2 0 obj
 <<
   /Type /Pages
-  /Kids [3 0 R 7 0 R 10 0 R 11 0 R 15 0 R 14 0 R ]
-  /Count 6
->>
-endobj
-11 0 obj
-<<
-  /Type /Page
-  /MediaBox [0 0 595 841 ]
-  /Resources <<
-    /ProcSet [/PDF /Text ]
-  >>
+  /Kids [3 0 R 7 0 R ]
+  /Count 2
 >>
 endobj
 3 0 obj
@@ -35,15 +25,6 @@ endobj
   >>
 >>
 endobj
-15 0 obj
-<<
-  /Type /Page
-  /MediaBox [0 0 595 841 ]
-  /Resources <<
-    /ProcSet [/PDF /Text ]
-  >>
->>
-endobj
 7 0 obj
 <<
   /Type /Page
@@ -52,36 +33,9 @@ endobj
   /Resources <<
     /Font <<
       /F3 8 0 R 
-      /F4 13 0 R 
     >>
     /ProcSet [/PDF /Text ]
   >>
->>
-endobj
-10 0 obj
-<<
-  /Type /Page
-  /MediaBox [0 0 595 841 ]
-  /Resources <<
-    /ProcSet [/PDF /Text ]
-  >>
->>
-endobj
-14 0 obj
-<<
-  /Type /Page
-  /MediaBox [0 0 595 841 ]
-  /Resources <<
-    /ProcSet [/PDF /Text ]
-  >>
->>
-endobj
-13 0 obj
-<<
-  /Type /Font
-  /SubType /Type1
-  /BaseFont /Courier-Bold
-  /Encoding /WinAnsiEncoding
 >>
 endobj
 5 0 obj
@@ -104,15 +58,7 @@ endobj
 <<
   /Type /Font
   /SubType /Type1
-  /BaseFont /Courier
-  /Encoding /WinAnsiEncoding
->>
-endobj
-12 0 obj
-<<
-  /Type /Font
-  /SubType /Type1
-  /BaseFont /Courier-Bold
+  /BaseFont /Helvetica
   /Encoding /WinAnsiEncoding
 >>
 endobj
@@ -122,8 +68,8 @@ endobj
 >>
 stream
 BT
-/F1 12 Tf
-1 0 0 1 65 700 Tm
+/F1 24 Tf
+1 0 0 1 65 70 Tm
 (Click the button below to open the executable or open the attachment manually.)Tj
 ET
 endstream
@@ -135,34 +81,28 @@ endobj
 stream
 BT
 /F3 24 Tf
-1 0 0 1 50 50 Tm
-(FFFF is new page)Tj
+1 0 0 1 10 50 Tm
+(AaBg is new page)Tj
 ET
 endstream
 endobj
 xref
-0 16
+0 10
 0000000000 65535 f
 0000000009 00000 n
 0000000063 00000 n
-0000000272 00000 n
-0000001506 00000 n
-0000001081 00000 n
-0000001186 00000 n
-0000000566 00000 n
-0000001294 00000 n
-0000001675 00000 n
-0000000750 00000 n
-0000000161 00000 n
-0000001397 00000 n
-0000000972 00000 n
-0000000861 00000 n
-0000000455 00000 n
+0000000133 00000 n
+0000000800 00000 n
+0000000482 00000 n
+0000000587 00000 n
+0000000316 00000 n
+0000000695 00000 n
+0000000968 00000 n
 trailer
 <<
   /Root 1 0 R 
-  /Size 16
+  /Size 10
 >>
 startxref
-1780
+1073
 %%EOF
