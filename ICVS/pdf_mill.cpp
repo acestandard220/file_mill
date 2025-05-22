@@ -2,23 +2,50 @@
 
 namespace PDF_MILL
 {
-    std::array<const char*, _version_index_last>version_string{ 
+    std::array<const std::string, _marker_index_last_> marker_string {
+        "Tf",
+        "Tj",
+        "Tm",
+        "Td"
+    };
+
+    std::array<const std::string, _filter_index_last_> filter_string
+    {
+         "__unknown__",
+         "/FlateDecode"
+    };
+
+    std::unordered_map<std::string, filter_index> filter_map
+    {
+        {"/FlateDecode", FLATEDECODE}
+    };
+
+    std::array<const char*, _version_index_last_>version_string{ 
         "%PDF-1.0",
         "%PDF-1.2",
         "%PDF-1.4",
         "%PDF-1.7" 
     };
-    std::array<const std::string, _type_index_last> type_string{
-        "/Catalog",
-        "/Pages",
-        "/Page",
-        "endobj",
+   
+    std::array<const std::string, _resource_type_last_> resource_string = { 
         "/Font",
-        "/Contents",
-        "/FontDescriptor",
-        "stream"
+        "/ProcSet" 
     };
-    std::array<const std::string, _key_index_last> key_string{
+  
+    std::array<const std::string, _type_index_last_> type_string{
+       "/Catalog",
+       "/Pages",
+       "/Page",
+       "endobj",
+       "/Font",
+       "/Contents",
+       "/FontDescriptor",
+       "stream",
+       "/FontFile"
+    };
+
+    std::array<const std::string, _key_index_last_> PDF_MILL::key_string{
+        "/Type",
         "/Count",
         "/Contents",
         "/Kids",
@@ -29,32 +56,75 @@ namespace PDF_MILL
         "/Font",
         "/ProcSet",
         "/F",
-        endline,
+        "/n",
         "trailer",
         "/Size",
         "/Root",
         "/BaseFont",
-        "/Encoding" };
-    std::array<const std::string, _key_line_last> key_line_string = { 
+        "/Encoding",
+        "/SubType",
+        "/Subtype",
+        "/FontDescriptor",
+        "/Flags",
+        "/FontBBox",
+        "/ItalicAngle",
+        "/Ascent",
+        "/Descent",
+        "/CapHeight",
+        "/XHeight",
+        "/StemV",
+        "/StemH",
+        "/FontFile",
+        "/FontFile2",
+        "/Length1",
+        "/Filter"
+    };
+
+    std::array<const std::string, _key_line_last_> key_line_string{
         "stream",
         "xref",
         "startxref",
-        "trailer" 
-    };
-    std::array<const std::string, _resource_type_last> resource_string = { 
-        "/Font",
-        "/ProcSet" 
-    };
-    std::array<const char*, _label_index_last>label_string{ "/F" };
-
-    std::unordered_map<char, char> pair = { 
-        {'[', ']'}, 
-        {'{', '}'}, 
-        {'(', ')'} 
+        "trailer",
+        "BT",
+        "ET"
     };
 
+    std::array<const std::string, _label_index_last_>label_string{
+        "/F"
+    };
 
-    std::array<const std::string, base_font_last> base_font_string = {
+    std::unordered_map<char, char> pair{
+        {'[', ']'},
+        {'{', '}'},
+        {'(', ')'}
+    };
+
+    std::unordered_map<char, char> pair2 {
+       {']', '['},
+       {'}', '{'},
+       {')', '('}
+    };
+
+
+    std::array<const std::string, _procset_index_last_> procset_string{
+        "/PDF",
+        "/Text",
+        "/ImageA",
+        "/ImageB",
+        "/ImageC",
+        "/ImageI"
+    };
+
+    std::unordered_map<std::string, procset_index>procset_map{
+        {"/PDF",    PROCSET_PDF},
+        {"/Text",   PROCSET_TEXT},
+        {"/ImageA", PROCSET_IMAGE_A},
+        {"/ImageB", PROCSET_IMAGE_B},
+        {"/ImageC", PROCSET_IMAGE_C},
+        {"/ImageI", PROCSET_IMAGE_I},
+    };
+
+    std::array<const std::string, _base_font_last_> base_font_string = {
         "/Courier",
         "/Courier-Bold",
         "/Courier-BoldOblique",
@@ -70,7 +140,7 @@ namespace PDF_MILL
         "/Times-Roman-Italic",
         "/ZapfDingbats"
     };
-    std::array<const std::string, _sub_type_index_last> sub_type_string{
+    std::array<const std::string, _sub_type_index_last_> sub_type_string{
         "/Type0",
         "/Type1",
         "/Type2",
@@ -78,29 +148,12 @@ namespace PDF_MILL
         "/TrueType",
         "MMType1"
     };
-    std::array<const std::string, base_font_last> encoding_string{
+    std::array<const std::string, _base_font_last_> encoding_string{
         "/MacExpertEncoding",
         "/MacRomanEncoding",
         "/WinAnsiEncoding"
     };
 
-    std::array<const std::string, _procset_index_last> procset_string{
-       "/PDF",
-       "/Text",
-       "/ImageA",
-       "/ImageB",
-       "/ImageC",
-       "/ImageI"
-    };
-
-    std::unordered_map<std::string, procset_index>procset_map{
-        {"/PDF",   PROCSET_PDF},
-        {"/Text",  PROCSET_TEXT},
-        {"/ImageA",PROCSET_IMAGE_A},
-        {"/ImageB",PROCSET_IMAGE_B},
-        {"/ImageC",PROCSET_IMAGE_C},
-        {"/ImageI",PROCSET_IMAGE_I},
-    };
 
     std::unordered_map<std::string, base_font> base_font_map{
         {"/Courier", COURIER},
@@ -140,12 +193,25 @@ namespace PDF_MILL
         "Tj" 
     };
 
-    global_file_instance* global_data = nullptr;
+    GlobalContext* global_data = nullptr;
 
     void Initialize()
     {
-        global_data = new global_file_instance; 
-        global_data->fix_data = std::make_shared<fix_filedata>();
+        global_data = new GlobalContext;
+        global_data->fix_data = std::make_shared<FixFileData>();
+        
+    }
+
+    _filedata::_filedata()
+    {
+    }
+
+    FixFileData::FixFileData()
+    {
+    }
+
+    WriteFileData::WriteFileData()
+    {
     }
 
 }

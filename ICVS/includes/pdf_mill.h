@@ -1,21 +1,14 @@
-#include <array>
-#include <iostream>
-#include <fstream>
-#include <type_traits>
-#include <unordered_map>
-#include <vector>
-#include <sstream>
-#include <set>
-#include <iomanip>
-#include <algorithm>
-#include <ostream>
-#include <string>
-
 #pragma once
-#include "pdf_mill_core.h"
 
 
-//#define INDENT for (int i = 0; i < indent_track + 2; i++) { out += " "; }
+#include "pdf_mill_core_types.h"
+#include "pdf_mill_obj.h"
+#include "pdf_mill_root.h"
+#include "pdf_mill_page.h"
+#include "pdf_mill_font.h"
+#include "pdf_mill_box.h"
+
+
 
 constexpr const char* INDENT_2 = "  ";
 constexpr const char* INDENT_4 = "    ";
@@ -24,8 +17,6 @@ constexpr const char* DICT_CLOSE = ">>";
 
 constexpr const char* endline = "\n";
 
-
-//TODO: Implement custom indent macro...
 
 
 namespace PDF_MILL
@@ -36,120 +27,11 @@ namespace PDF_MILL
         X, Y, W, H
     };
 
-    enum xref_values
-    {
-        BYTE_OFFSET,
-        UID,
-        FLAG,
-        _xref_values_last
-    };
-
-    enum type_index
-    {
-        CATALOG,
-        PAGES,
-        PAGE,
-        ENDOBJ,
-        FONT,
-        CONTENT,
-        FONT_DESCRIPTOR,
-        STREAM,
-        _type_index_last // Make sure it's always last
-        // NOTE: Don't forget to update array size after additions...
-    };
-
-    enum key_index
-    {
-        KEY_COUNT,
-        KEY_CONTENTS,
-        KEY_KIDS,
-        KEY_PAGES,
-        KEY_MEDIABOX,
-        KEY_LENGTH,
-        KEY_RESOURCES,
-        KEY_FONT,
-        KEY_PROCSET,
-        KEY_F_LABEL,
-        KEY_ENDLINE_S,
-        KEY_TRAILER,
-        KEY_SIZE,
-        KEY_ROOT,
-        KEY_BASE_FONT,
-        KEY_ENCODING,
-        _key_index_last
-    };
-
-    enum key_line_index {
-        KL_STREAM,
-        KL_XREF,
-        KL_STARTXREF,
-        KL_TRAILER,
-        _key_line_last
-    };
-
-    enum procset_index
-    {
-        PROCSET_PDF,
-        PROCSET_TEXT,
-        PROCSET_IMAGE_A,
-        PROCSET_IMAGE_B,
-        PROCSET_IMAGE_C,
-        PROCSET_IMAGE_I,
-        _procset_index_last
-    };
-
-    enum label_index
-    {
-        LABEL_F,
-
-        _label_index_last
-    };
-
-    enum sub_type_index
-    {
-        TYPE0, //Composite fonts
-        TYPE1,
-        TYPE2,
-        TYPE3,
-        TRUE_TYPE,
-        MMTYPE1,
-        //CIDFontType0,
-        //CIDFontType2,
-        _sub_type_index_last
-    };
-
-    enum base_font
-    {
-        COURIER,
-        COURIER_BOLD,
-        COURIER_BOLDOBLIQUE,
-        COURIER_OBLIQUE,
-        HELVETICA,
-        HELVETICA_BOLD,
-        HELVETICA_BOLDOBLIQUE,
-        HELVETICA_OBLIQUE,
-        SYMBOL,
-        TIMES_ROMAN,
-        TIMES_ROMAN_BOLD,
-        TIMES_ROMAN_BOLDITALIC,
-        TIMES_ROMAN_ITALIC,
-        ZAPFDINGBATS,
-        base_font_last
-    };
-
-    enum encoding
-    {
-        MACEXPERTENCODING,
-        MACROMANENCODING,
-        WINANSIENCODING,
-        encoding_last
-    };
-
     enum resource_type
     {
         RESOURCE_FONT = KEY_FONT,
         RESOURCE_PROCSET = KEY_PROCSET,
-        _resource_type_last 
+        _resource_type_last_
     };
 
     enum version_index
@@ -158,129 +40,94 @@ namespace PDF_MILL
         PDF_1_2,
         PDF_1_4,
         PDF_1_7,
-        _version_index_last
+        _version_index_last_
     };
 
-    enum font_parameters
+    enum filter_index
     {
-        sub_type_param,base_font_param,encoding_param,font_descriptor_param,_font_parameter_last
+        UNKNOWN,
+        FLATEDECODE,
+
+        _filter_index_last_
     };
 
-    enum _font_desc_param
-    {
-        flag_param,
-        font_bbox_param,
-        italic_angle_param,
-        ascent_param,
-        descent_param,
-        cap_height_param,
-        xheight_param,
-        stemv_param,
-        stemh_param,
-        font_file_param,
-        _font_desc_parameter_last
-    };
+
+
+
+    extern std::array<const std::string, _filter_index_last_> filter_string;
+    extern std::unordered_map<std::string, filter_index> filter_map;
+
+    extern std::array<const std::string, _base_font_last_> base_font_string;
+    extern std::array<const std::string, _base_font_last_> encoding_string;
+
+    extern std::array<const std::string, _sub_type_index_last_> sub_type_string;
+ 
+
+
+    extern std::array<const char*, _version_index_last_>version_string;
+    extern std::array<const std::string, _resource_type_last_> resource_string;
     
-
-    extern std::array<const std::string, _type_index_last> type_string;
-    extern std::array<const std::string, base_font_last> base_font_string;
-    extern std::array<const std::string, base_font_last> encoding_string;
-    extern std::array<const std::string, _key_index_last> key_string;
-    extern std::array<const std::string, _sub_type_index_last> sub_type_string;
-    extern std::array<const std::string, _key_line_last> key_line_string;
-    extern std::array<const std::string, _resource_type_last> resource_string;
-    extern std::array<const std::string, _procset_index_last> procset_string;
-
-    extern std::array<const char*, _label_index_last>label_string;
-    extern std::array<const char*, _version_index_last>version_string;
-
-    extern std::unordered_map<char, char> pair;
-    extern std::unordered_map<std::string, procset_index>procset_map;
     extern std::unordered_map<std::string, base_font> base_font_map;
     extern std::unordered_map<std::string, encoding> encoding_map;
     extern std::unordered_map<std::string, sub_type_index> sub_type_map;
 
-    struct root_node;
-    struct Page;
-    struct Object;
-    struct Content;
-    struct Font_Descriptor;
-    struct Font_File;
 
-    struct _box
+
+    /////////
+    
+
+
+    extern std::unordered_map<char, char> pair;
+
+
+    extern std::unordered_map<std::string, procset_index>procset_map;
+
+
+
+
+    struct FixFileData
     {
-        int _x, _y, _w, _h;
-
-        _box() = default;
-        _box(int x, int y, int w, int h)
-            : _x(x), _y(y), _w(w), _h(h)
-        {
-        }
-
-        std::array<int, 4> asArray() { return std::array<int, 4>{_x, _y, _w, _h}; }
-    };
-
-    struct media_box :public _box
-    {
-
-        media_box() = default;
-
-        media_box(int x, int y, int w, int h)
-            :_box(x,y,w,h)
-        {
-        }
-    };
-    struct font_box :public _box
-    {
-        font_box() = default;
-        font_box(int x, int y, int w, int h)
-            :_box(x, y, w, h)
-        {
-
-        }
-    };
-
-    struct fix_filedata
-    {
-        size_t file_bytes;
-        size_t xref_start;
+        FixFileData();
+        size_t file_bytes = 0;
+        size_t xref_start = 0;
         size_t trailer_offset = 0;
-        size_t num_obj;
+        size_t num_obj = 0;
 
-        std::vector<std::array<int, _xref_values_last>> obj_offsets;
+        std::vector<std::array<int, _xref_values_last_>> obj_offsets;
         bool faulty = false;
     };
 
 
     struct _filedata
     {
-        _filedata() = default;
-        size_t file_bytes;
-        size_t xref_start;
-        size_t num_obj;
+        _filedata();
+        size_t file_bytes = 0;;
+        size_t xref_start = 0;
+        size_t num_obj = 0;
+        size_t largest_obj_size = 0;
 
-        std::string version;
+        std::string version = "";
         std::string eof = "%%EOF";
 
-        root_node* root = nullptr;
+        Root* root = nullptr;
 
-        std::vector<std::array<int, _xref_values_last>> obj_offsets;
+        std::vector<std::array<int, _xref_values_last_>> obj_offsets;
         std::vector<bool> read_objects; //keep track of objects that have been read
 
         std::unordered_map<uint32_t, Page> cPage;
-        std::unordered_map<uint32_t, std::array<int, _font_parameter_last>> cFont;
-        std::unordered_map<uint32_t, std::array<int, _font_desc_parameter_last>> cFontDescriptors;
-        std::unordered_map<uint32_t, Font_File> cFontFile;
-        std::unordered_map<uint32_t, font_box> cFontBox;
+        std::unordered_map<uint32_t, std::array<int, _font_parameter_last_>> cFont;
+        std::unordered_map<uint32_t, FontDescriptor> cFontDescriptors;
+        std::unordered_map<uint32_t, FontFile> cFontFile;
+        std::unordered_map<uint32_t, FontBox> cFontBox;
         std::unordered_map<uint32_t, Content> cContent;
 
         std::string current_path;
         std::list<uint32_t> available_index;
     };
 
-    struct write_filedata
+    struct WriteFileData
     {
-        write_filedata() = default;
+        WriteFileData();
 
         size_t file_bytes;
         size_t xref_start;
@@ -288,117 +135,47 @@ namespace PDF_MILL
 
         uint32_t root_id;
 
-        std::vector<std::array<int, _xref_values_last>> obj_offsets;
-        std::array<int, _xref_values_last> __unique_onj_zero__;
+        std::vector<std::array<int, _xref_values_last_>> obj_offsets;
+        std::array<int, _xref_values_last_> __unique_onj_zero__;
 
         std::string write_path;
     };
 
-    struct new_filedata
+    struct NewFileData
     {
-        new_filedata() = default;
+        NewFileData() = default;
 
         size_t file_bytes;
         size_t xref_start;
         size_t xref_start_c;
         size_t num_obj;
 
-        std::string version;
+        std::string version = "";
         std::string eof = "%%EOF";
 
-        root_node* root = nullptr;
+        Root* root = nullptr;
 
-        std::vector<std::array<int, _xref_values_last>> obj_offsets;
+        std::vector<std::array<int, _xref_values_last_>> obj_offsets;
 
         std::unordered_map<uint32_t, Page> cPage;
-        std::unordered_map<uint32_t, std::array<int, _font_parameter_last>> cFont;
-        std::unordered_map<uint32_t, std::array<int, _font_desc_parameter_last>> cFontDescriptors; 
-        std::unordered_map<uint32_t, Font_File> cFontFile;
-        std::unordered_map<uint32_t, font_box> cFontBox;
+        std::unordered_map<uint32_t, std::array<int, _font_parameter_last_>> cFont;
+        std::unordered_map<uint32_t, std::array<int, _font_desc_parameter_last_>> cFontDescriptors; 
+        std::unordered_map<uint32_t, FontFile> cFontFile;
+        std::unordered_map<uint32_t, FontBox> cFontBox;
         std::unordered_map<uint32_t, Content> cContent;
 
-
     };
 
-    struct global_file_instance
+    struct GlobalContext
     {
         std::vector<std::shared_ptr<_filedata>> file_reads;
-        std::vector<std::shared_ptr<write_filedata>> file_writes;
-        std::vector<std::shared_ptr<new_filedata>> new_writes;
+        std::vector<std::shared_ptr<WriteFileData>> file_writes;
+        std::vector<std::shared_ptr<NewFileData>> new_writes;
 
         std::shared_ptr<_filedata> cur_file_read;
-        std::shared_ptr<write_filedata> cur_file_write;
-        std::shared_ptr<fix_filedata> fix_data;
-        std::shared_ptr<new_filedata> cur_new_write;
-    };
-
-    struct page_collection
-    {
-        uint32_t id;
-        std::vector<uint32_t> mPages;
-        uint32_t nPages = 0;
-        media_box* media_box = nullptr;
-
-        const int get_obj_index(int page_num)const { return mPages[page_num - 1]; }
-    };
-
-    struct Object
-    {
-    public:
-        Object() {};
-        Object(uint32_t _id, type_index _type) {
-            id = _id;
-            type = _type;
-        }
-        uint32_t id;
-        type_index type;
-    };
-
-    struct Page : public Object
-    {
-        Page() = default;
-
-        Page(uint32_t _id)
-            :Object(_id, PAGE)
-        {
-        }
-
-        uint32_t parent;
-        media_box media_box;
-        std::vector<uint32_t> rContents;// reference to its content objects;
-        std::unordered_map<int, uint32_t> rFonts;
-        std::vector<int> cProcSet;
-
-        int highest_font_tag = 1;
-    };
-
-   /* struct Font_Descriptor : public Object
-    {
-        Font_Descriptor() = default;
-        Font_Descriptor(uint32_t _id)
-            :Object(_id, FONT_DESCRIPTOR)
-        {
-
-        }
-        int flag;
-        font_box font_box;
-        int italic_angle;
-        int ascent;
-        int descent;
-        int cap_height;
-        int xheight;
-        int stemV;
-        int stemH;
-
-        uint32_t font_file;
-    };*/
-
-    struct Font_File
-    {
-        size_t length;
-        size_t length1;
-
-        std::string stream;
+        std::shared_ptr<WriteFileData> cur_file_write;
+        std::shared_ptr<FixFileData> fix_data;
+        std::shared_ptr<NewFileData> cur_new_write;
     };
 
     struct _tf
@@ -424,63 +201,21 @@ namespace PDF_MILL
         std::string text = "";
     };
 
-    struct TextBlock
-    {
-        uint32_t font_size;
-        int font_tag;
-        std::array<int32_t, 2> text_position;
-
-        std::array<int32_t, 6>text_matrix;
-        std::string text = "";
-    };
-
-    struct Content : public Object
-    {
-        Content() = default;
-        Content(uint32_t _id)
-            :Object(_id, CONTENT)
-        {
-        }
-        size_t stream_length = 0;
-        std::vector<TextBlock> text_blocks;
-    };
-
-    struct root_node
-    {
-        uint32_t id;
-        page_collection* pages = nullptr;
-    };
-
-    extern global_file_instance* global_data;
+    extern GlobalContext* global_data;
 
     extern "C" ICVS_DLL void Initialize();
 
     extern "C" ICVS_DLL void ReadToStructure();
     extern "C" ICVS_DLL void ShutDown();
     extern "C" ICVS_DLL void RequestReadPath(const char* path);
-        
-    extern "C" ICVS_DLL void AddPage();
-    extern "C" ICVS_DLL void RemovePage(int page_num);
-    extern "C" ICVS_DLL void ChangePageSize(int page_num, int x, int y);
+    
+    extern "C" ICVS_DLL _filedata* GetFileData();
 
     extern "C" ICVS_DLL void UpdateVersion(version_index version);
     
-    extern "C" ICVS_DLL void ChangeFont(int page_num, int tag,base_font font);
-    extern "C" ICVS_DLL void AddFont(int page_num, base_font font, sub_type_index sub_type = TYPE1, encoding = WINANSIENCODING);
-
-    extern "C" ICVS_DLL int GetNumberOfPages();
-    extern "C" ICVS_DLL uint32_t GetPageObjNumber(int page_number);
-    extern "C" ICVS_DLL const char** GetPagesNumbers();
-    extern "C" ICVS_DLL std::array<int,4> GetPageMediaBox(int page_number);
-    extern "C" ICVS_DLL std::vector<TextBlock> GetPageTextBlocks(int page_number);
-    extern "C" ICVS_DLL base_font GetPageBaseFont(int page_number, int font_tag);
-    //extern "C" ICVS_DLL std::array<int, 2> GetPageTextPosition(int page_number);
-
     extern "C" ICVS_DLL void WriteToFile();
     extern "C" ICVS_DLL void RequestWritePath(std::string path);
     
-
-
     extern "C" ICVS_DLL void WriteNewPDF();
 
 

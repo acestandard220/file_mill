@@ -1,18 +1,15 @@
-%PDF-1.71 0 obj
-<<
+%PDF-1.71 0 obj/n<<
   /Type /Catalog
   /Pages 2 0 R 
 >>
 endobj
-2 0 obj
-<<
+2 0 obj/n<<
   /Type /Pages
   /Kids [3 0 R 7 0 R ]
   /Count 2
 >>
 endobj
-3 0 obj
-<<
+3 0 obj/n<<
   /Type /Page
   /MediaBox [0 0 400 900 ]
   /Contents 4 0 R 
@@ -21,12 +18,11 @@ endobj
       /F1 6 0 R 
       /F2 5 0 R 
     >>
-    /ProcSet [/PDF /Text ]
+    /ProcSet [/PDF /PDF /Text ]
   >>
 >>
 endobj
-7 0 obj
-<<
+7 0 obj/n<<
   /Type /Page
   /MediaBox [0 0 900 900 ]
   /Contents 9 0 R 
@@ -34,48 +30,43 @@ endobj
     /Font <<
       /F3 8 0 R 
     >>
-    /ProcSet [/PDF /Text ]
+    /ProcSet [/PDF /PDF /Text ]
   >>
 >>
 endobj
-5 0 obj
-<<
+5 0 obj/n<<
   /Type /Font
   /SubType /Type1
   /BaseFont /Helvetica
-  /Encoding /WinAnsiEncoding
+  /Encoding /MacExpertEncoding
 >>
 endobj
-6 0 obj
-<<
-  /Type /Font
-  /SubType /Type1
-  /BaseFont /ZapfDingbats
-  /Encoding /WinAnsiEncoding
->>
-endobj
-8 0 obj
-<<
+6 0 obj/n<<
   /Type /Font
   /SubType /Type1
   /BaseFont /Helvetica
-  /Encoding /WinAnsiEncoding
+  /Encoding /MacExpertEncoding
 >>
 endobj
-4 0 obj
-<<
+8 0 obj/n<<
+  /Type /Font
+  /SubType /Type1
+  /BaseFont /Helvetica
+  /Encoding /MacExpertEncoding
+>>
+endobj
+4 0 obj/n<<
   /Length 100
 >>
 stream
 BT
 /F1 24 Tf
-1 0 0 1 65 70 Tm
+1 0 0 1 0 70 Tm
 (Click the button below to open the executable or open the attachment manually.)Tj
 ET
 endstream
 endobj
-9 0 obj
-<<
+9 0 obj/n<<
   /Length 53
 >>
 stream
@@ -90,19 +81,19 @@ xref
 0 10
 0000000000 65535 f
 0000000009 00000 n
-0000000063 00000 n
-0000000133 00000 n
-0000000800 00000 n
-0000000482 00000 n
-0000000587 00000 n
-0000000316 00000 n
-0000000695 00000 n
-0000000968 00000 n
+0000000064 00000 n
+0000000135 00000 n
+0000000820 00000 n
+0000000496 00000 n
+0000000604 00000 n
+0000000324 00000 n
+0000000712 00000 n
+0000000988 00000 n
 trailer
 <<
   /Root 1 0 R 
   /Size 10
 >>
 startxref
-1073
+1094
 %%EOF

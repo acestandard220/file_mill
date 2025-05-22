@@ -1,9 +1,7 @@
 #include "includes/pdf_mill.h"
 
-
 namespace PDF_MILL
 {
-
     int indent_track = 0;//TODO: Make static in function below...
     void indent(std::string& out) { for (int i = 0; i < indent_track + 2; i++) { out += " "; }; }//Confirm whether to make inline...
 
@@ -18,7 +16,6 @@ namespace PDF_MILL
         out += std::to_string(obj_index) + " 0 obj";
 
         out += key_string[KEY_ENDLINE_S] + DICT_OPEN + endline;
-
     }
 
     void create_obj_end_line(std::string& out)
@@ -44,7 +41,7 @@ namespace PDF_MILL
         out += key_string[key] + " " + value + endline;
     }
 
-    //TODO: Add maps for trailing strings "0 R"eg.
+    //TODO: Add maps for trailing strings "0 R" eg.
     //TODO: implement reading something like this and thenn get other functions to do some more work later
     //      read kids and counts in the same way ... 1. extract array full length then individual functions
     std::string create_indirect_obj_value_array_string(const std::vector<uint32_t>& value)
@@ -273,10 +270,10 @@ namespace PDF_MILL
 
             create_obj_start_line(line, obj_index);
             create_obj_type_line(line, type_index::FONT);
-            create_obj_sub_type_line(line, static_cast<sub_type_index>(font_data[sub_type_param]));
+            create_obj_sub_type_line(line, static_cast<sub_type_index>(font_data[SUB_TYPE_PARAM]));
 
-            create_direct_key_value_line(line, KEY_BASE_FONT, base_font_string[font_data[base_font_param]]);
-            create_direct_key_value_line(line, KEY_ENCODING, encoding_string[font_data[encoding_param]]);
+            create_direct_key_value_line(line, KEY_BASE_FONT, base_font_string[font_data[BASE_FONT_PARAM]]);
+            create_direct_key_value_line(line, KEY_ENCODING, encoding_string[font_data[ENCODING_PARAM]]);
 
             create_obj_end_line(line);
             write_line(file, line);
@@ -298,7 +295,7 @@ namespace PDF_MILL
             std::string line;
             create_obj_start_line(line, content_data.id);
 
-            create_direct_key_value_line(line, KEY_LENGTH, std::to_string(content_data.stream_length));
+            create_direct_key_value_line(line, KEY_LENGTH, std::to_string(content_data.len_stream));
 
             create_custom_line(line, DICT_CLOSE);
 
@@ -394,7 +391,7 @@ namespace PDF_MILL
 
     void RequestWritePath(std::string path)
     {
-        global_data->file_writes.emplace_back(std::make_shared<write_filedata>());
+        global_data->file_writes.emplace_back(std::make_shared<WriteFileData>());
         global_data->cur_file_write = global_data->file_writes[0];
 
         global_data->cur_file_write->write_path = path;

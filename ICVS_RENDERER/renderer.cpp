@@ -5,7 +5,7 @@ namespace PDF_RENDERER
 	Renderer2D* renderer_data = nullptr;
 	LineRenderer* line_renderer_data = nullptr;
 
-	std::array<std::string, PDF_MILL::base_font_last> base_font_path_string
+	std::array<std::string, PDF_MILL::_base_font_last_> base_font_path_string
 	{ 
 		"P:\\Projects\\VIM\\ImgConvs\\x64\\Debug\\fonts\\courier.ttf",
 		"P:\\Projects\\VIM\\ImgConvs\\x64\\Debug\\fonts\\courier_bold.ttf",
@@ -102,7 +102,7 @@ namespace PDF_RENDERER
 			std::cout << "Could not initialize FreeType...\n";
 			return;
 		}
-		for (int i = 0; i < PDF_MILL::base_font_last; i++)
+		for (int i = 0; i < PDF_MILL::_base_font_last_; i++)
 		{
 			
 			if (FT_New_Face(renderer_data->ft, base_font_path_string[i].c_str(), 0, &renderer_data->face))
@@ -112,6 +112,7 @@ namespace PDF_RENDERER
 			}
 
 			FT_Set_Char_Size(renderer_data->face, 0, 48 * 64, 72, 72);
+			//FT_Set_Pixel_Sizes(renderer_data->face, 0, 48);
 
 			for (unsigned char c = 0; c < 128; c++)
 			{
@@ -130,6 +131,7 @@ namespace PDF_RENDERER
 					GL_RED, GL_UNSIGNED_BYTE,
 					renderer_data->face->glyph->bitmap.buffer
 				);
+
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -224,15 +226,13 @@ namespace PDF_RENDERER
 	void BeginRender(int page_number)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, renderer_data->frame_buffer);
-
 		glUseProgram(renderer_data->program);
 
 		glm::mat4 projection(1.0f);
 
-		auto h = PDF_MILL::GetPageMediaBox(page_number);
+		auto h = PDF_MILL::GetPageMediaBox(PDF_MILL::GetFileData(),page_number);
 		projection = glm::ortho(0.0f, (float)h[2], 0.0f, (float)h[3]);
 		glUniformMatrix4fv(glGetUniformLocation(renderer_data->program, "projection"), 1, GL_FALSE, &projection[0][0]);
-
 	}
 
 	void EndRender()
@@ -241,7 +241,7 @@ namespace PDF_RENDERER
 	}
 
 	//NOTE: Consider if this indirection is needed.
-	void _render_page_box(std::array<int,4> data)
+	void _render_page_box(std::array<float,4> data)
 	{
 		glBindVertexArray(renderer_data->vao);
 		glBindBuffer(GL_ARRAY_BUFFER, renderer_data->vbo);
@@ -267,7 +267,7 @@ namespace PDF_RENDERER
 
 	void RenderPage(int page_number)
 	{
-		auto mb = PDF_MILL::GetPageMediaBox(page_number);
+		auto mb = PDF_MILL::GetPageMediaBox(PDF_MILL::GetFileData(),page_number);
 		_render_page_box(mb);
 	}
 
@@ -298,13 +298,13 @@ namespace PDF_RENDERER
 
 	void RenderPageText(int page_number)
 	{
-		std::vector<PDF_MILL::TextBlock> text_blocks = PDF_MILL::GetPageTextBlocks(page_number);
+		std::vector<PDF_MILL::TextBlock> text_blocks = PDF_MILL::GetPageTextBlocks(PDF_MILL::GetFileData(), page_number);
 
-		renderer_data->page_size = { PDF_MILL::GetPageMediaBox(page_number)[2],PDF_MILL::GetPageMediaBox(page_number)[3] };
+		renderer_data->page_size = { PDF_MILL::GetPageMediaBox(PDF_MILL::GetFileData(),page_number)[2],PDF_MILL::GetPageMediaBox(PDF_MILL::GetFileData(),page_number)[3] };
 
 		for (auto text_block : text_blocks)
 		{
-			auto base_font = PDF_MILL::GetPageBaseFont(page_number, text_block.font_tag);
+			auto base_font = PDF_MILL::GetPageBaseFont(PDF_MILL::GetFileData(),page_number, text_block.font_tag);
 			glm::vec2 font_position = { text_block.text_matrix[4],text_block.text_matrix[5] };
 
 			//FT_Set_Char_Size(renderer_data->face, 0, text_block.font_size * 64, 72, 72);

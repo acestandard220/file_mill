@@ -74,27 +74,26 @@ void render_()
         PDF_MILL::ReadToStructure();
 
         std::string file_p = file_path_buffer;
-        int index = file_p.find(".");
+        uint32_t index = (uint32_t)file_p.find(".");
         file_name_buffer = "FILE::: " + file_p.substr(0, index);
 
-        p = PDF_MILL::GetNumberOfPages();
+       p = PDF_MILL::GetNumberOfPages(PDF_MILL::GetFileData());
         pages_list = true;
     }
 
     if (ImGui::Button("Add Page", ImVec2(440, 20)))
     {
-        PDF_MILL::AddPage();
-        
+        PDF_MILL::AddPage(PDF_MILL::GetFileData());
     }
 
     if (ImGui::Button("Remove Page", ImVec2(440, 20)))
     {
-        PDF_MILL::RemovePage(4);
+        PDF_MILL::RemovePage(PDF_MILL::GetFileData(),4);
     }
 
     if (ImGui::Button("Add Font", ImVec2(440, 20)))
     {
-        PDF_MILL::AddFont(2, PDF_MILL::COURIER_BOLD);
+        //PDF_MILL::AddFont(2, PDF_MILL::COURIER_BOLD);
     }
 
     if (ImGui::InputText("Path To", write_path, 256, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Write To File", ImVec2(440, 20)))
@@ -105,7 +104,7 @@ void render_()
 
     if(pages_list)
     {
-        ImGui::SliderInt("Page Number", &current_page_number, 1, PDF_MILL::GetNumberOfPages());
+        ImGui::SliderInt("Page Number", &current_page_number, 1, PDF_MILL::GetNumberOfPages(PDF_MILL::GetFileData()));
     }
 
     ImGui::End();
