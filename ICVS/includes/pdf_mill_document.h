@@ -16,6 +16,7 @@ namespace PDF_MILL
 		W,
 		RG,
 		rg,
+		re,
 		_marker_index_last_
 	};
 	struct __marker;

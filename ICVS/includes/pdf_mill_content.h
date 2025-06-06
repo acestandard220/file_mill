@@ -5,6 +5,26 @@
 namespace PDF_MILL
 {
     struct _filedata;
+    struct __color
+    {
+        float rgb[3];
+    };
+
+    struct __color_a
+    {
+        float rgba[4];
+    };
+
+    struct graphics_box :public _box
+    {
+        graphics_box() = default;
+        graphics_box(float x, float y, float w, float h)
+            :_box(x, y, w, h)
+        {
+
+        }
+
+    };
 
     struct TextBlock
     {
@@ -14,6 +34,15 @@ namespace PDF_MILL
 
         std::array<int32_t, 6> text_matrix;
         std::string text = "";
+    };
+
+    struct GraphicsBlock
+    {
+        int stroke_width;
+        __color stroke_color;
+        __color fill_color;
+
+        graphics_box box;
     };
 
     struct Content : public Object
@@ -28,6 +57,7 @@ namespace PDF_MILL
         int filter = 0;
 
         std::vector<TextBlock> text_blocks;
+        std::vector<GraphicsBlock> graphics_blocks;
     };
 
     void read_content_data(_filedata* filedata, std::ifstream& file, const std::set<uint32_t>& contents);

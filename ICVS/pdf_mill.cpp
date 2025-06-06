@@ -6,7 +6,11 @@ namespace PDF_MILL
         "Tf",
         "Tj",
         "Tm",
-        "Td"
+        "Td",
+        "w",
+        "RG",
+        "rg",
+        "re"
     };
 
     std::array<const std::string, _filter_index_last_> filter_string
