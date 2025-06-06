@@ -7,7 +7,8 @@
 #include "pdf_mill_page.h"
 #include "pdf_mill_font.h"
 #include "pdf_mill_box.h"
-
+#include "pdf_mill_outline.h"
+#include "pdf_mill_info.h"
 
 
 constexpr const char* INDENT_2 = "  ";
@@ -110,9 +111,9 @@ namespace PDF_MILL
         std::string eof = "%%EOF";
 
         Root* root = nullptr;
+        Info* info = nullptr;
 
         std::vector<std::array<int, _xref_values_last_>> obj_offsets;
-        std::vector<bool> read_objects; //keep track of objects that have been read
 
         std::unordered_map<uint32_t, Page> cPage;
         std::unordered_map<uint32_t, std::array<int, _font_parameter_last_>> cFont;
@@ -139,43 +140,19 @@ namespace PDF_MILL
         std::array<int, _xref_values_last_> __unique_onj_zero__;
 
         std::string write_path;
+        std::set<uint32_t> written_obj;
     };
 
-    struct NewFileData
-    {
-        NewFileData() = default;
-
-        size_t file_bytes;
-        size_t xref_start;
-        size_t xref_start_c;
-        size_t num_obj;
-
-        std::string version = "";
-        std::string eof = "%%EOF";
-
-        Root* root = nullptr;
-
-        std::vector<std::array<int, _xref_values_last_>> obj_offsets;
-
-        std::unordered_map<uint32_t, Page> cPage;
-        std::unordered_map<uint32_t, std::array<int, _font_parameter_last_>> cFont;
-        std::unordered_map<uint32_t, std::array<int, _font_desc_parameter_last_>> cFontDescriptors; 
-        std::unordered_map<uint32_t, FontFile> cFontFile;
-        std::unordered_map<uint32_t, FontBox> cFontBox;
-        std::unordered_map<uint32_t, Content> cContent;
-
-    };
 
     struct GlobalContext
     {
         std::vector<std::shared_ptr<_filedata>> file_reads;
         std::vector<std::shared_ptr<WriteFileData>> file_writes;
-        std::vector<std::shared_ptr<NewFileData>> new_writes;
 
         std::shared_ptr<_filedata> cur_file_read;
         std::shared_ptr<WriteFileData> cur_file_write;
+
         std::shared_ptr<FixFileData> fix_data;
-        std::shared_ptr<NewFileData> cur_new_write;
     };
 
     struct _tf
@@ -209,7 +186,8 @@ namespace PDF_MILL
     extern "C" ICVS_DLL void ShutDown();
     extern "C" ICVS_DLL void RequestReadPath(const char* path);
     
-    extern "C" ICVS_DLL _filedata* GetFileData();
+    extern "C" ICVS_DLL _filedata* GetCurFileData();
+    extern "C" ICVS_DLL std::vector<std::shared_ptr<_filedata>>& GetFileReadArray();
 
     extern "C" ICVS_DLL void UpdateVersion(version_index version);
     

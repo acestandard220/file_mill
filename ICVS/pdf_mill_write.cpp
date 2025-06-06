@@ -1,4 +1,5 @@
 #include "includes/pdf_mill.h"
+#include "includes/pdf_mill_document.h"
 
 namespace PDF_MILL
 {
@@ -150,7 +151,22 @@ namespace PDF_MILL
     {
         out += key_line_string[key] + endline;
     }
+   /* void write_info_obj(std::ofstream& file)
+    {
+        int offset = file.tellp();
 
+        global_data->cur_file_write->obj_offsets[global_data->cur_file_read->info->id] = {
+           offset,
+           global_data->cur_file_read->obj_offsets[global_data->cur_file_read->info->id][UID],
+           global_data->cur_file_read->obj_offsets[global_data->cur_file_read->info->id][FLAG]
+        };
+
+        std::string line;
+        create_obj_start_line(line, global_data->cur_file_read->info->id);
+        create_direct_key_value_line(line,KEY_CREATION_DATE,)
+        create_obj_end_line(line);
+        write_line(file, line);
+    }*/
     void write_root_obj(std::ofstream& file)
     {
         int offset = file.tellp();
@@ -161,8 +177,7 @@ namespace PDF_MILL
             global_data->cur_file_read->obj_offsets[global_data->cur_file_read->root->id][UID],
             global_data->cur_file_read->obj_offsets[global_data->cur_file_read->root->id][FLAG]
         };
-        global_data->cur_file_write->obj_offsets[0] = { 0,65535,0 };
-
+        global_data->cur_file_write->obj_offsets[0] = { 0, 65535, 0 };
 
         std::string line;
         create_obj_start_line(line, global_data->cur_file_read->root->id);
@@ -171,10 +186,86 @@ namespace PDF_MILL
 
         std::string temp = create_indirect_obj_value_array_string(global_data->cur_file_read->root->pages->id);
         create_key_indirect_obj_value_ref_line(line, key_index::KEY_PAGES, temp);
+        temp = create_indirect_obj_value_array_string(global_data->cur_file_read->root->outline->id);
+        create_key_indirect_obj_value_ref_line(line, key_index::KEY_OUTLINES, temp);
 
         create_obj_end_line(line);
         write_line(file, line);
     }
+
+    void write_outline_item_obj(std::ofstream& file, OutlineItem* item);
+    void write_outline_obj(std::ofstream& file)
+    {
+        int offset = file.tellp();
+
+        global_data->cur_file_write->obj_offsets[global_data->cur_file_read->root->outline->id] = { offset, global_data->cur_file_read->obj_offsets[global_data->cur_file_read->root->outline->id][UID], global_data->cur_file_read->obj_offsets[global_data->cur_file_read->root->outline->id][FLAG] };
+        
+        std::string line;
+        std::string temp;
+
+        create_obj_start_line(line, global_data->cur_file_read->root->outline->id);
+        create_obj_type_line(line, type_index::OUTLINES);
+
+        create_direct_key_value_line(line, key_index::KEY_COUNT, std::to_string(global_data->cur_file_read->root->outline->count));
+        temp = create_indirect_obj_value_array_string(global_data->cur_file_read->root->outline->first->id);
+        create_key_indirect_obj_value_ref_line(line, key_index::KEY_FIRST, temp);
+
+        temp = create_indirect_obj_value_array_string(global_data->cur_file_read->root->outline->last->id);
+        create_key_indirect_obj_value_ref_line(line, key_index::KEY_LAST, temp);
+
+        create_obj_end_line(line);
+        write_line(file, line);
+
+        write_outline_item_obj(file, global_data->cur_file_read->root->outline->first);
+    }
+
+    void write_outline_item_obj(std::ofstream& file, OutlineItem* item)
+    {
+        if (global_data->cur_file_write->written_obj.find(item->id) != global_data->cur_file_write->written_obj.end()) { return; }
+
+        int offset = file.tellp();
+
+        global_data->cur_file_write->obj_offsets[item->id] = { offset, global_data->cur_file_read->obj_offsets[item->id][UID], global_data->cur_file_read->obj_offsets[item->id][FLAG] };
+
+        std::string line;
+        std::string temp;
+
+        if (!item)
+        {
+            return;
+        }
+
+        create_obj_start_line(line, item->id);
+
+        create_direct_key_value_line(line, key_index::KEY_TITLE, create_array_string(item->title,'('));
+        create_direct_key_value_line(line, key_index::KEY_COUNT, std::to_string(item->count));
+        create_direct_key_value_line(line, key_index::KEY_PARENT, create_indirect_obj_value_array_string(item->parent));
+
+        auto write_optional_ref = [&](OutlineItem* ptr, key_index key){
+                if (ptr)
+                {
+                    create_direct_key_value_line(line, key, create_indirect_obj_value_array_string(ptr->id));
+                }
+        };
+        write_optional_ref(item->next, KEY_NEXT);
+   /*     write_optional_ref(item->prev, KEY_PREVIOUS);*/
+        write_optional_ref(item->first, KEY_FIRST);
+        write_optional_ref(item->last, KEY_LAST);
+
+
+        create_obj_end_line(line);
+        write_line(file, line);
+        global_data->cur_file_write->written_obj.insert(item->id);
+
+        for (auto child : { item->first, item->next, item->last })
+        {
+            if (child)
+            {
+                write_outline_item_obj(file, child);
+            }
+        }
+    }
+
 
     void write_page_collector(std::ofstream& file)
     {
@@ -358,6 +449,10 @@ namespace PDF_MILL
         create_custom_line(line, DICT_OPEN);
         {
             create_key_indirect_obj_value_ref_line(line, KEY_ROOT, create_indirect_obj_value_array_string(global_data->cur_file_read->root->id));
+            if(global_data->cur_file_read->info)
+            {
+                create_key_indirect_obj_value_ref_line(line, KEY_INFO, create_indirect_obj_value_array_string(global_data->cur_file_read->info->id));
+            }
             create_direct_key_value_line(line, KEY_SIZE, std::to_string(global_data->cur_file_read->num_obj));
         }
         create_custom_line(line, DICT_CLOSE);
@@ -378,8 +473,10 @@ namespace PDF_MILL
         global_data->cur_file_write->obj_offsets.resize(global_data->cur_file_read->num_obj);
 
         write_line(file, global_data->cur_file_read->version);
+        //write_info_obj(file);
         write_root_obj(file);
         write_page_collector(file);
+        write_outline_obj(file);
         write_page_obj(file);
         write_font_obj(file);
         write_content_obj(file);

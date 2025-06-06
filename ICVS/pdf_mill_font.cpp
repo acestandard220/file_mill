@@ -17,9 +17,9 @@ namespace PDF_MILL
 
 			filedata->cFont[index][SUB_TYPE_PARAM] = sub_type_map[get_key_value_i<std::string>(line, std::vector<key_index>{KEY_SUBTYPE_b, KEY_SUBTYPE_s})];
 			
-			filedata->cFont[index][ENCODING_PARAM] = sub_type_map[get_key_value_i<std::string>(line, std::vector<key_index>{KEY_ENCODING})];
+			filedata->cFont[index][ENCODING_PARAM] = encoding_map[get_key_value_i<std::string>(line, std::vector<key_index>{KEY_ENCODING})];
 
-			filedata->cFont[index][BASE_FONT_PARAM] = sub_type_map[get_key_value_i<std::string>(line, std::vector<key_index>{BASE_FONT_PARAM})];
+			filedata->cFont[index][BASE_FONT_PARAM] = base_font_map[get_key_value_i<std::string>(line, std::vector<key_index>{KEY_BASE_FONT})];
 
 			uint32_t font_desc_index = get_indirect_obj(line, std::vector<key_index>{KEY_FONT_DESCRIPTOR}, ' ');
 			filedata->cFont[index][FONT_DESCRIPTOR_PARAM] = font_desc_index;

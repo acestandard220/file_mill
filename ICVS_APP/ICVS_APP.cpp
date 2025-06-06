@@ -18,14 +18,24 @@ bool show_ = true;
 //TODO: Add JSON data reading
 //TODO: Read these values from file
 
-char file_path_buffer[256] = "samplepdf.pdf";
-char write_path[256] = "outputpdf.pdf";
-std::string file_name_buffer = "No file loaded.";
-
-int p = 5;
-int current_page_number = 1;
 const char** r{};
-bool pages_list = false;
+
+struct current_file
+{
+    PDF_MILL::_filedata* file = nullptr;
+
+    char file_path_buffer[256] = "samplepdf.pdf";
+    char write_path[256] = "outputpdf.pdf";
+    std::string file_name_buffer = "No file loaded.";
+    
+    int page_number = 1;
+    int remove_page = 4;
+    int number_of_pages = 0;
+
+    int file_index = 0;
+};
+current_file* _file = nullptr;
+
 
 void render_()
 {
@@ -46,10 +56,8 @@ void render_()
         window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
     }
 
-
     if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
         window_flags |= ImGuiWindowFlags_NoBackground;
-
 
     ImGui::Begin("DockSpace Demo", &dockspaceOpen, window_flags);
     ImGui::PopStyleVar(2);
@@ -61,34 +69,45 @@ void render_()
     {
         ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
         ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
-
     }
 
     bool demo = true;
     ImGui::Begin("Inspector");
-    ImGui::Text("%s", file_name_buffer.c_str());
-    if (ImGui::InputText("Path From", file_path_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Open File", ImVec2(440, 20)))
+    ImGui::Text("%s", _file->file_name_buffer.c_str());
+    if (ImGui::InputText("Path From", _file->file_path_buffer, 256, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Open File", ImVec2(440, 20)))
     {
         PDF_MILL::ShutDown();
-        PDF_MILL::RequestReadPath(file_path_buffer);
+        PDF_MILL::RequestReadPath(_file->file_path_buffer);
         PDF_MILL::ReadToStructure();
 
-        std::string file_p = file_path_buffer;
-        uint32_t index = (uint32_t)file_p.find(".");
-        file_name_buffer = "FILE::: " + file_p.substr(0, index);
+        _file->file = PDF_MILL::GetCurFileData();
 
-       p = PDF_MILL::GetNumberOfPages(PDF_MILL::GetFileData());
-        pages_list = true;
+        std::string file_p = _file->file_path_buffer;
+        uint32_t index = (uint32_t)file_p.find(".");
+        _file->file_name_buffer = "FILE::: " + file_p.substr(0, index);
+
+       _file->number_of_pages = PDF_MILL::GetNumberOfPages(_file->file);
+       _file->file_index = 1;
     }
 
     if (ImGui::Button("Add Page", ImVec2(440, 20)))
     {
-        PDF_MILL::AddPage(PDF_MILL::GetFileData());
+        auto ptr = _file->file;
+        if (!ptr)
+        {
+            ImGui::OpenPopup("No files are currently open");
+            ImGui::BeginPopupModal("Message Box", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+            std::cout << "No files are currently open\n";
+        }
+        else
+        {
+            PDF_MILL::AddPage(ptr);
+        }
     }
 
-    if (ImGui::Button("Remove Page", ImVec2(440, 20)))
+    if (ImGui::InputInt("Page", &_file->remove_page) || ImGui::Button("Remove Page", ImVec2(440, 20)))
     {
-        PDF_MILL::RemovePage(PDF_MILL::GetFileData(),4);
+        PDF_MILL::RemovePage(PDF_MILL::GetCurFileData(), _file->remove_page);
     }
 
     if (ImGui::Button("Add Font", ImVec2(440, 20)))
@@ -96,15 +115,15 @@ void render_()
         //PDF_MILL::AddFont(2, PDF_MILL::COURIER_BOLD);
     }
 
-    if (ImGui::InputText("Path To", write_path, 256, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Write To File", ImVec2(440, 20)))
+    if (ImGui::InputText("Path To", _file->write_path, 256, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Write To File", ImVec2(440, 20)))
     {
-        PDF_MILL::RequestWritePath(write_path);
+        PDF_MILL::RequestWritePath(_file->write_path);
         PDF_MILL::WriteToFile();
     }
 
-    if(pages_list)
+    if(_file->file_index)
     {
-        ImGui::SliderInt("Page Number", &current_page_number, 1, PDF_MILL::GetNumberOfPages(PDF_MILL::GetFileData()));
+        ImGui::SliderInt("Page Number", &_file->page_number, 1, PDF_MILL::GetNumberOfPages(PDF_MILL::GetCurFileData()));
     }
 
     ImGui::End();
@@ -114,7 +133,7 @@ void render_()
     ImGui::Begin("ScenePort");
 
     ImGui::Image(
-        PDF_RENDERER::GetTextureID(), ImVec2(1280,1024), ImVec2(0, 1), ImVec2(1, 0)
+        PDF_RENDERER::GetTextureID(), ImVec2(1280, 1024), ImVec2(0, 1), ImVec2(1, 0)
         );
 
     ImGui::End();
@@ -154,9 +173,12 @@ int main()
 
 
     bool show_demo_window = false;
+
+    _file = new current_file;
     
     PDF_MILL::Initialize();
     PDF_RENDERER::InitializeRenderer();    
+
     glViewport(0, 0, 1280, 1024);
     while (!glfwWindowShouldClose(window))
     {
@@ -169,11 +191,11 @@ int main()
 
         render_();
         
-        if (pages_list)
+        if (_file->file_index)
         {
-            PDF_RENDERER::BeginRender(current_page_number);
-            PDF_RENDERER::RenderPage(current_page_number);
-            PDF_RENDERER::RenderPageText(current_page_number);
+            PDF_RENDERER::BeginRender(_file->page_number);
+            PDF_RENDERER::RenderPage(_file->page_number);
+            PDF_RENDERER::RenderPageText(_file->page_number);
             PDF_RENDERER::EndRender();
         }
 

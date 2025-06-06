@@ -91,6 +91,12 @@ namespace PDF_MILL
                 con.text_blocks.push_back(text_block);
             }
 
+
+            GraphicsBlock graphics_block;
+            {
+                
+            }
+
             filedata->cContent[index] = con;
         }
     }

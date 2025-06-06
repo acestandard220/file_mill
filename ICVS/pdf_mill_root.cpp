@@ -1,6 +1,7 @@
 #include "includes/pdf_mill_root.h"
 #include "includes/pdf_mill.h"
 #include "includes/pdf_mill_page.h"
+#include "includes/pdf_mill_outline.h"
 
 namespace PDF_MILL
 {
@@ -35,6 +36,12 @@ namespace PDF_MILL
         filedata->root->pages = new PageCollection;
         filedata->root->pages->id = get_key_value_i<uint32_t>(line, std::vector<key_index>{ KEY_PAGES });
 
-        filedata->read_objects[GetRootID(filedata)] = true;
+        uint32_t outline_index = get_key_value_i<uint32_t>(line, std::vector<key_index>{KEY_OUTLINES});
+        if(outline_index)
+        {
+            filedata->root->outline = new Outline(outline_index);
+            read_outline_obj(filedata,file);
+        }
+
     }
 }

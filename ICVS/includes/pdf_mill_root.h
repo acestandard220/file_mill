@@ -6,6 +6,7 @@
 namespace PDF_MILL
 {
     struct PageCollection;
+    struct Outline;
 
     struct Root : public Object
     {
@@ -13,6 +14,7 @@ namespace PDF_MILL
         Root(uint32_t _id, type_index type);
 
         PageCollection* pages = nullptr;
+        Outline* outline = nullptr;
     };
 
     void read_root_obj(_filedata* filedata, std::ifstream& file);

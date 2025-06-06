@@ -23,6 +23,9 @@ namespace PDF_MILL
         FONT_DESCRIPTOR,
         STREAM,
         FONT_FILE,
+        OUTLINES,
+        OUTLINES_ITEM,
+        INFO,
         _type_index_last_ 
     };
 
@@ -61,6 +64,27 @@ namespace PDF_MILL
         KEY_FONTFILE2,
         KEY_LENGTH1,
         KEY_FILTER,
+        KEY_OUTLINES,
+        KEY_OUTLINES_ITEM,
+        KEY_TITLE,
+        KEY_NEXT,
+        KEY_PREVIOUS,
+        KEY_FIRST,
+        KEY_LAST,
+        KEY_PARENT,
+        KEY_DEST,
+        KEY_FIT,
+        KEY_FIT_H,
+        KEY_FIT_R,
+        KEY_FIT_B,
+        KEY_FIT_V,
+        KEY_FIT_BH,
+        KEY_FIT_BV,
+        KEY_INFO,
+        KEY_PRODUCER,
+        KEY_CREATOR,
+        KEY_CREATION_DATE,
+        KEY_MODIFICATION_DATE,
         _key_index_last_
     };
 

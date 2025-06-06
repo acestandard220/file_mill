@@ -41,7 +41,10 @@ namespace PDF_MILL
        "/Contents",
        "/FontDescriptor",
        "stream",
-       "/FontFile"
+       "/FontFile",
+       "/Outlines",
+       "OutlineItem",
+       "/Info"
     };
 
     std::array<const std::string, _key_index_last_> PDF_MILL::key_string{
@@ -56,7 +59,7 @@ namespace PDF_MILL
         "/Font",
         "/ProcSet",
         "/F",
-        "/n",
+        "\n",
         "trailer",
         "/Size",
         "/Root",
@@ -77,7 +80,28 @@ namespace PDF_MILL
         "/FontFile",
         "/FontFile2",
         "/Length1",
-        "/Filter"
+        "/Filter",
+        "/Outlines",
+        "__OutlineItem__",
+        "/Title",
+        "/Next",
+        "/Prev",
+        "/First",
+        "/Last",
+        "/Parent",
+        "/Dest",
+        "/Fit",
+        "/FitH",
+        "/FitR",
+        "/FitB",
+        "/FitV",
+        "/FitBH",
+        "/FitBV",
+        "/Info",
+        "/Producer",
+        "/Creator",
+        "/CreationDate",
+        "/ModDate"
     };
 
     std::array<const std::string, _key_line_last_> key_line_string{
@@ -199,7 +223,6 @@ namespace PDF_MILL
     {
         global_data = new GlobalContext;
         global_data->fix_data = std::make_shared<FixFileData>();
-        
     }
 
     _filedata::_filedata()

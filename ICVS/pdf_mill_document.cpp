@@ -61,12 +61,12 @@ namespace PDF_MILL
             catch (const std::invalid_argument& e)
             {
                 std::cout << "Does not contain object index index: Invalid XREF";
-                return std::vector<uint32_t>();
+                return r;
             }
             catch (const std::out_of_range& e)
             {
                 std::cout << "Number is too huge\n";
-                return std::vector<uint32_t>();
+                return r;
             }
         }
         return r;
@@ -86,7 +86,16 @@ namespace PDF_MILL
         std::string key = line.substr(start + 1, key_len);
 
         int value_len = get_length_to(line, start + key_len + 1);
-        int value = std::stoi(line.substr(start + key_len + 1, value_len));
+        int value = 0;
+
+        try
+        {
+            value = std::stoi(line.substr(start + key_len + 1, value_len));
+        }
+        catch (std::invalid_argument& e)
+        {
+            std::cout << "Invalid STOI Argument...\n";
+        }
 
         return std::pair<std::string, uint32_t>(key, value);
     }
@@ -270,7 +279,7 @@ namespace PDF_MILL
     std::vector<uint32_t> get_indirect_array_obj(std::string& line, std::vector<key_index> key, char delimiter)
     {
         size_t start = has_key<key_index>(line, key);
-        return get_indirect_array_obj(line, start, delimiter);
+        return (start != 0) ? get_indirect_array_obj(line, start, delimiter) : std::vector<uint32_t>();
     }
 
     std::vector<uint32_t> get_indirect_array_obj(std::string& line, label_index label, char delimiter)
@@ -282,19 +291,14 @@ namespace PDF_MILL
     uint32_t get_indirect_obj(std::string& line, std::vector<key_index> key, char delimiter)
     {
         size_t start = has_key<key_index>(line, key);
-
         return (start) ? get_indirect_array_obj(line, start, delimiter)[0] : 0;
     }
 
     uint32_t get_indirect_obj(std::string& line, label_index label, char delimiter)
     {
         size_t start = has_key<label_index>(line, label);
-        return get_indirect_array_obj(line, start, delimiter)[0];
+        return (start) ? get_indirect_array_obj(line, start, delimiter)[0] : 0;
     }
-   
-
-
-
 
  /*   std::vector<uint32_t> get_indirect_array_obj_multiple(std::string& line, label_index label, char delimiter)
     {
@@ -312,10 +316,6 @@ namespace PDF_MILL
         }
         returns;
     }*/
-
-   
-
-    
 
     int validate_obj_type(std::string& line, type_index type)
     {

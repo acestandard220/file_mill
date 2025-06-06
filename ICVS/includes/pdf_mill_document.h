@@ -12,6 +12,10 @@ namespace PDF_MILL
 		TJ,
 		TM,
 		TD,
+
+		W,
+		RG,
+		rg,
 		_marker_index_last_
 	};
 	struct __marker;
@@ -81,12 +85,12 @@ namespace PDF_MILL
 	{
 		const std::string* arr_ptr = get_typeid_string_arr<T>();
 
-		std::string str_value = arr_ptr[(int)key] + " ";
+		std::string str_value = arr_ptr[(int)key];
 		int line_index = line.find(str_value);
 		int search_length = str_value.length();
 		if (line.find(str_value) != std::string::npos)
 		{
-			return line_index + search_length; //true
+			return (line[line_index + search_length] == ' ') ? line_index + search_length + 1 : line_index + search_length; //true
 		}
 		else
 		{
@@ -101,12 +105,12 @@ namespace PDF_MILL
 
 		for (auto& key : keys)
 		{
-			std::string str_value = arr_ptr[(int)key] + " ";
+			std::string str_value = arr_ptr[(int)key];
 			int line_index = line.find(str_value);
 			int search_length = str_value.length();
 			if (line.find(str_value) != std::string::npos)
 			{
-				return line_index + search_length; //true
+				return (line[line_index + search_length] == ' ') ? line_index + search_length + 1 : line_index + search_length; //true
 			}
 			else
 			{
@@ -201,9 +205,9 @@ namespace PDF_MILL
 	}
 
 	template <typename T>
-	T get_key_value_i(std::string& line, std::vector<key_index> type)
+	T get_key_value_i(std::string& line, std::vector<key_index> type, char delimiter = ' ', char ele_del = ' ')
 	{
-		return get_array_values_i<T>(line, type, ' ', ' ')[0];
+		return get_array_values_i<T>(line, type, delimiter, ele_del)[0];
 	}
 
 

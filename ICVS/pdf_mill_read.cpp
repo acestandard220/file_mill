@@ -105,13 +105,11 @@ namespace PDF_MILL {
                 global_data->cur_file_read->num_obj = std::stoi(line.substr(start, integer_length));
                 global_data->cur_file_read->obj_offsets.resize(global_data->cur_file_read->num_obj);
                 global_data->cur_file_read->obj_offsets.resize(global_data->cur_file_read->num_obj);
-                global_data->cur_file_read->read_objects.resize(global_data->cur_file_read->num_obj);
                 
                 std::cout << "Num_Obj::: " << global_data->cur_file_read->num_obj << std::endl;
             }
 
             start = has_key(line, KEY_ROOT);
-
             if (start)
             {
                 int integer_length = get_length_to(line, start);
@@ -120,7 +118,15 @@ namespace PDF_MILL {
                 global_data->cur_file_read->root = new Root(temp_index, CATALOG);
 
                 std::cout << "ss:: " << GetRootID(global_data->cur_file_read.get()) << std::endl;
-                break;
+                continue;
+            }
+
+            start = has_key(line, KEY_INFO);
+            if (start)
+            {
+                int integer_length = get_length_to(line, start);
+                uint32_t info_obj_index = std::stoi(line.substr(start, integer_length));
+                global_data->cur_file_read->info = new Info(info_obj_index);
             }
         }
     }
@@ -210,12 +216,12 @@ namespace PDF_MILL {
 
         read_obj_offsets(file);
         
+        read_info_obj(global_data->cur_file_read.get(), file);
         read_root_obj(global_data->cur_file_read.get(),file);
         read_page_collector(global_data->cur_file_read.get(),file);
         read_page_data(global_data->cur_file_read.get(),file);
 
         file.close();
-
     }
 
     void RequestReadPath(const char* path)
@@ -226,16 +232,21 @@ namespace PDF_MILL {
         global_data->cur_file_read->current_path = path;
     }
 
-    _filedata* GetFileData()
+    _filedata* PDF_MILL::GetCurFileData()
     {
         return global_data->cur_file_read.get();
     }
     
+
+    std::vector<std::shared_ptr<_filedata>>& GetFileReadArray()
+    {
+        return global_data->file_reads;
+    }
+
     void ShutDown()
     {
         std::cout << "Shutdown function has beend called\n";
         //global_data->cur_file_read.reset();
-        
     }
 
     Object add_obj(type_index type)

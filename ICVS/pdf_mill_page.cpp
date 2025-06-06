@@ -16,7 +16,6 @@ namespace PDF_MILL
 
         filedata->root->pages->mPages = get_array_objs(line, KEY_KIDS, '[');
 
-        filedata->read_objects[filedata->root->pages->id] = true;
     }
 
     void read_page_data(_filedata* filedata, std::ifstream& file)
@@ -55,10 +54,10 @@ namespace PDF_MILL
             std::string font_resource_line;
             read_dict_block(resource_line, font_resource_line, KEY_FONT);
 
-            while (std::getline(file, line))
-            {
                     //Now read individual resources
-                int _start = has_key<key_index>(resource_line, KEY_FONT);
+            int _start = has_key<key_index>(resource_line, KEY_FONT);
+            if(_start)
+            {
                 int len = get_length_to(resource_line, _start, '>');
                 std::string res_line = resource_line.substr(_start + 2, len - 2);
 
@@ -81,7 +80,7 @@ namespace PDF_MILL
                     _font_objs.insert(values.second);
                 }
             }
-            filedata->read_objects[page_obj_index] = true;
+            
         }
         read_font_obj(filedata, file, _font_objs);
         read_content_data(filedata, file, _content_objs);

@@ -1,5 +1,7 @@
 #include "renderer.h"
 
+#define TO_INCHES (1/72)
+
 namespace PDF_RENDERER
 {
 	Renderer2D* renderer_data = nullptr;
@@ -157,7 +159,6 @@ namespace PDF_RENDERER
 		InitializeCharacters();
 		InitializeFrameBufffer();
 
-
 		renderer_data->vertex_shader = glCreateShader(GL_VERTEX_SHADER);
 		renderer_data->fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
 
@@ -230,8 +231,20 @@ namespace PDF_RENDERER
 
 		glm::mat4 projection(1.0f);
 
-		auto h = PDF_MILL::GetPageMediaBox(PDF_MILL::GetFileData(),page_number);
-		projection = glm::ortho(0.0f, (float)h[2], 0.0f, (float)h[3]);
+		auto mb = PDF_MILL::GetPageMediaBox(PDF_MILL::GetCurFileData(), page_number);
+		projection = glm::ortho(0.0f, (float) mb[2], 0.0f, (float) mb[3]);
+
+		float page_aspect = mb[2] / mb[3];
+
+		if (page_aspect > 1.0f)
+		{
+			projection = glm::ortho(0.0f, (float) mb[2] , 0.0f, (float) mb[2]  / page_aspect);
+		}
+		else
+		{
+			projection = glm::ortho(0.0f, (float) mb[3] * page_aspect , 0.0f, (float) mb[3] );
+		}
+
 		glUniformMatrix4fv(glGetUniformLocation(renderer_data->program, "projection"), 1, GL_FALSE, &projection[0][0]);
 	}
 
@@ -267,7 +280,7 @@ namespace PDF_RENDERER
 
 	void RenderPage(int page_number)
 	{
-		auto mb = PDF_MILL::GetPageMediaBox(PDF_MILL::GetFileData(),page_number);
+		auto mb = PDF_MILL::GetPageMediaBox(PDF_MILL::GetCurFileData(), page_number);
 		_render_page_box(mb);
 	}
 
@@ -298,18 +311,19 @@ namespace PDF_RENDERER
 
 	void RenderPageText(int page_number)
 	{
-		std::vector<PDF_MILL::TextBlock> text_blocks = PDF_MILL::GetPageTextBlocks(PDF_MILL::GetFileData(), page_number);
+		std::vector<PDF_MILL::TextBlock> text_blocks = PDF_MILL::GetPageTextBlocks(PDF_MILL::GetCurFileData(), page_number);
 
-		renderer_data->page_size = { PDF_MILL::GetPageMediaBox(PDF_MILL::GetFileData(),page_number)[2],PDF_MILL::GetPageMediaBox(PDF_MILL::GetFileData(),page_number)[3] };
+		renderer_data->page_size = { PDF_MILL::GetPageMediaBox(PDF_MILL::GetCurFileData(),page_number)[2],PDF_MILL::GetPageMediaBox(PDF_MILL::GetCurFileData(),page_number)[3] };
 
 		for (auto text_block : text_blocks)
 		{
-			auto base_font = PDF_MILL::GetPageBaseFont(PDF_MILL::GetFileData(),page_number, text_block.font_tag);
-			glm::vec2 font_position = { text_block.text_matrix[4],text_block.text_matrix[5] };
+			float scale = 1; text_block.font_size / 64;
 
-			//FT_Set_Char_Size(renderer_data->face, 0, text_block.font_size * 64, 72, 72);
+			auto base_font = PDF_MILL::GetPageBaseFont(PDF_MILL::GetCurFileData(), page_number, text_block.font_tag);
+			glm::vec2 font_position = { text_block.text_matrix[4],text_block.text_matrix[5]};
+
+			FT_Set_Char_Size(renderer_data->face, 0, text_block.font_size * 64, 72, 72);
 			
-			//base_font = (PDF_MILL::base_font)8;//Debug
 			for (auto it = text_block.text.begin(); it < text_block.text.end(); it++)
 			{
 				glBindVertexArray(renderer_data->vao);
@@ -317,11 +331,11 @@ namespace PDF_RENDERER
 
 				auto character_data = renderer_data->cCharacters[base_font][*it];
 				
-				float xpos = font_position.x + character_data.bearing.x ; 
-				float ypos = font_position.y - (character_data.size.y - character_data.bearing.y) ;
+				float xpos = font_position.x + character_data.bearing.x * scale; 
+				float ypos = font_position.y - (character_data.size.y - character_data.bearing.y) * scale ;
 
-				float w = character_data.size.x;
-				float h = character_data.size.y;
+				float w = character_data.size.x * scale;
+				float h = character_data.size.y * scale;
 
 				float vertices[24] = {
 				xpos,     ypos + h, 0.0, 0.0,
@@ -346,7 +360,7 @@ namespace PDF_RENDERER
 				glBindVertexArray(0);
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-				font_position.x += (character_data.advance >> 6 );
+				font_position.x += (character_data.advance >> 6 ) * scale;
 			}
 		}
 	}
